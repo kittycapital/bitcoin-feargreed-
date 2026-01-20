@@ -3,15 +3,28 @@ Bitcoin Indicators - Data Fetcher
 - Bitcoin price from CoinGecko
 - Fear & Greed from alternative.me
 - DVOL (VIX) from Deribit
-12 months of data
+- Put/Call Ratio from Yahoo Finance (IBIT ETF)
+12 months of data (PCR accumulates over time)
 """
 
 import json
 import requests
 from datetime import datetime, timedelta
+import os
 
 # Configuration
 DATA_FILE = 'data.json'
+
+
+def load_existing_data():
+    """Load existing data.json to preserve accumulated PCR history"""
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return None
 
 
 def fetch_bitcoin_price():
@@ -122,6 +135,64 @@ def fetch_deribit_dvol():
         return {}
 
 
+def fetch_ibit_put_call_ratio():
+    """Fetch today's IBIT Put/Call ratio from Yahoo Finance using yfinance"""
+    
+    print("\n📊 Fetching IBIT Put/Call ratio from Yahoo Finance...")
+    
+    try:
+        import yfinance as yf
+        
+        ticker = yf.Ticker("IBIT")
+        
+        # Get all expiration dates
+        expirations = ticker.options
+        
+        if not expirations:
+            print("   ❌ No options data available for IBIT")
+            return None
+        
+        total_put_oi = 0
+        total_call_oi = 0
+        
+        # Sum open interest across all expirations
+        for exp in expirations:
+            try:
+                opt = ticker.option_chain(exp)
+                
+                # Sum call open interest
+                if hasattr(opt, 'calls') and not opt.calls.empty:
+                    call_oi = opt.calls['openInterest'].fillna(0).sum()
+                    total_call_oi += call_oi
+                
+                # Sum put open interest
+                if hasattr(opt, 'puts') and not opt.puts.empty:
+                    put_oi = opt.puts['openInterest'].fillna(0).sum()
+                    total_put_oi += put_oi
+                    
+            except Exception as e:
+                continue
+        
+        if total_call_oi == 0:
+            print("   ❌ No call open interest data")
+            return None
+        
+        # Calculate Put/Call ratio
+        pcr = round(total_put_oi / total_call_oi, 4)
+        
+        print(f"   ✅ Put OI: {total_put_oi:,}, Call OI: {total_call_oi:,}")
+        print(f"   ✅ Put/Call Ratio: {pcr}")
+        
+        return pcr
+        
+    except ImportError:
+        print("   ❌ yfinance not installed. Run: pip install yfinance")
+        return None
+    except Exception as e:
+        print(f"   ❌ Error fetching IBIT PCR: {e}")
+        return None
+
+
 def align_data(btc_prices, fng_index, vix_index):
     """Align all data to common dates"""
     
@@ -175,8 +246,44 @@ def find_nearest_value(target_date, data_dict, max_days):
     return nearest_value
 
 
+def update_pcr_history(existing_data, today_pcr):
+    """Update PCR history with today's value"""
+    
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # Get existing PCR history or start fresh
+    if existing_data and 'pcr_dates' in existing_data and 'pcr_index' in existing_data:
+        pcr_dates = existing_data['pcr_dates']
+        pcr_values = existing_data['pcr_index']
+    else:
+        pcr_dates = []
+        pcr_values = []
+    
+    # Add today's value if we have it and it's not already recorded
+    if today_pcr is not None:
+        if today not in pcr_dates:
+            pcr_dates.append(today)
+            pcr_values.append(today_pcr)
+            print(f"\n📈 Added PCR for {today}: {today_pcr}")
+        else:
+            # Update today's value
+            idx = pcr_dates.index(today)
+            pcr_values[idx] = today_pcr
+            print(f"\n📈 Updated PCR for {today}: {today_pcr}")
+    
+    # Keep only last 365 days
+    if len(pcr_dates) > 365:
+        pcr_dates = pcr_dates[-365:]
+        pcr_values = pcr_values[-365:]
+    
+    return pcr_dates, pcr_values
+
+
 def main():
     print("🚀 Starting Bitcoin Indicators data fetch...\n")
+    
+    # Load existing data (to preserve PCR history)
+    existing_data = load_existing_data()
     
     # Fetch Bitcoin price
     btc_prices = fetch_bitcoin_price()
@@ -191,10 +298,17 @@ def main():
     # Fetch DVOL (VIX)
     vix_index = fetch_deribit_dvol()
     
+    # Fetch IBIT Put/Call Ratio
+    today_pcr = fetch_ibit_put_call_ratio()
+    
     # Align data
     print("\n🔄 Aligning data...")
     dates, prices, fng, vix = align_data(btc_prices, fng_index, vix_index)
     print(f"   ✅ Aligned {len(dates)} data points")
+    
+    # Update PCR history
+    pcr_dates, pcr_values = update_pcr_history(existing_data, today_pcr)
+    print(f"   ✅ PCR history: {len(pcr_dates)} data points")
     
     # Save to JSON
     output = {
@@ -202,6 +316,8 @@ def main():
         'btc_prices': prices,
         'fng_index': fng,
         'vix_index': vix,
+        'pcr_dates': pcr_dates,
+        'pcr_index': pcr_values,
         'last_updated': datetime.utcnow().isoformat() + 'Z'
     }
     
@@ -215,8 +331,10 @@ def main():
     # Show latest values
     latest_fng = fng[-1] if fng[-1] is not None else 'N/A'
     latest_vix = vix[-1] if vix[-1] is not None else 'N/A'
+    latest_pcr = pcr_values[-1] if pcr_values else 'N/A'
     print(f"   😱 Latest Fear & Greed: {latest_fng}")
     print(f"   📈 Latest DVOL: {latest_vix}")
+    print(f"   📊 Latest Put/Call: {latest_pcr}")
 
 
 if __name__ == '__main__':
