@@ -216,8 +216,8 @@
     <div class="container">
         <div class="header">
             <div class="title-section">
-                <h1>비트코인 공포 탐욕 지수</h1>
-                <p>Bitcoin Fear & Greed Index</p>
+                <h1 id="page-title">비트코인 공포 탐욕 지수</h1>
+                <p id="page-subtitle">Bitcoin Fear & Greed Index</p>
             </div>
             <div class="stats">
                 <div class="stat-card">
@@ -225,9 +225,9 @@
                     <div class="stat-value price" id="btc-price">--</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Fear & Greed</div>
-                    <div class="stat-value neutral" id="fng-value">--</div>
-                    <div class="stat-status" id="fng-status"></div>
+                    <div class="stat-label" id="indicator-stat-label">Fear & Greed</div>
+                    <div class="stat-value neutral" id="indicator-value">--</div>
+                    <div class="stat-status" id="indicator-status"></div>
                 </div>
             </div>
         </div>
@@ -247,7 +247,7 @@
             </div>
         </div>
 
-        <!-- Fear & Greed Indicator -->
+        <!-- Indicator Chart -->
         <div class="chart-container">
             <div class="chart-label" id="indicator-label">Fear & Greed Index</div>
             <div class="chart-wrapper indicator">
@@ -262,6 +262,73 @@
         let chartData = null;
         let btcChart = null;
         let indicatorChart = null;
+        let currentIndicator = 'fng';
+
+        // Indicator configurations
+        const indicatorConfig = {
+            fng: {
+                title: '비트코인 공포 탐욕 지수',
+                subtitle: 'Bitcoin Fear & Greed Index',
+                label: 'Fear & Greed Index',
+                statLabel: 'Fear & Greed',
+                dataKey: 'fng_index',
+                zones: {
+                    high: { value: 75, color: 'rgba(239, 68, 68', label: '극단적 탐욕' },
+                    low: { value: 25, color: 'rgba(34, 197, 94', label: '극단적 공포' }
+                },
+                min: 0,
+                max: 100,
+                getStatus: function(value) {
+                    if (value <= 25) return { text: '극단적 공포', class: 'fear' };
+                    if (value <= 45) return { text: '공포', class: 'fear' };
+                    if (value <= 55) return { text: '중립', class: 'neutral' };
+                    if (value <= 75) return { text: '탐욕', class: 'greed' };
+                    return { text: '극단적 탐욕', class: 'greed' };
+                },
+                formatValue: (v) => v.toFixed(0),
+                tooltipLabel: (v, status) => `Fear & Greed: ${v.toFixed(0)} (${status.text})`
+            },
+            vix: {
+                title: '비트코인 변동성 지수',
+                subtitle: 'Bitcoin Volatility Index (DVOL)',
+                label: 'Volatility Index (DVOL)',
+                statLabel: 'DVOL',
+                dataKey: 'vix_index',
+                zones: {
+                    high: { value: 60, color: 'rgba(239, 68, 68', label: '고변동성' },
+                    low: { value: 40, color: 'rgba(34, 197, 94', label: '저변동성' }
+                },
+                min: 20,
+                max: 100,
+                getStatus: function(value) {
+                    if (value <= 40) return { text: '저변동성', class: 'fear' };
+                    if (value <= 60) return { text: '보통', class: 'neutral' };
+                    return { text: '고변동성', class: 'greed' };
+                },
+                formatValue: (v) => v.toFixed(1),
+                tooltipLabel: (v, status) => `DVOL: ${v.toFixed(1)} (${status.text})`
+            },
+            pcr: {
+                title: '비트코인 풋/콜 비율',
+                subtitle: 'Bitcoin Put/Call Ratio',
+                label: 'Put/Call Ratio',
+                statLabel: 'Put/Call',
+                dataKey: 'pcr_index',
+                zones: {
+                    high: { value: 0.7, color: 'rgba(239, 68, 68', label: '약세' },
+                    low: { value: 0.5, color: 'rgba(34, 197, 94', label: '강세' }
+                },
+                min: 0.2,
+                max: 1.2,
+                getStatus: function(value) {
+                    if (value <= 0.5) return { text: '강세', class: 'fear' };
+                    if (value <= 0.7) return { text: '중립', class: 'neutral' };
+                    return { text: '약세', class: 'greed' };
+                },
+                formatValue: (v) => v.toFixed(2),
+                tooltipLabel: (v, status) => `Put/Call: ${v.toFixed(2)} (${status.text})`
+            }
+        };
 
         async function loadData() {
             try {
@@ -289,26 +356,35 @@
             return new Date(parts[0], parts[1] - 1, parts[2]);
         }
 
-        function getFngStatus(value) {
-            if (value <= 25) return { text: '극단적 공포', class: 'fear' };
-            if (value <= 45) return { text: '공포', class: 'fear' };
-            if (value <= 55) return { text: '중립', class: 'neutral' };
-            if (value <= 75) return { text: '탐욕', class: 'greed' };
-            return { text: '극단적 탐욕', class: 'greed' };
+        function updatePageInfo(indicator) {
+            const config = indicatorConfig[indicator];
+            document.getElementById('page-title').textContent = config.title;
+            document.getElementById('page-subtitle').textContent = config.subtitle;
+            document.getElementById('indicator-label').textContent = config.label;
+            document.getElementById('indicator-stat-label').textContent = config.statLabel;
+            document.title = config.title;
         }
 
-        function updateStats() {
+        function updateStats(indicator) {
+            const config = indicatorConfig[indicator];
             const latestPrice = chartData.btc_prices[chartData.btc_prices.length - 1];
-            const latestFng = chartData.fng_index[chartData.fng_index.length - 1];
             
             document.getElementById('btc-price').textContent = formatPrice(latestPrice);
-            document.getElementById('fng-value').textContent = latestFng.toFixed(0);
             
-            const status = getFngStatus(latestFng);
-            document.getElementById('fng-status').textContent = status.text;
-            
-            const fngValueEl = document.getElementById('fng-value');
-            fngValueEl.className = 'stat-value ' + status.class;
+            const dataKey = config.dataKey;
+            if (chartData[dataKey] && chartData[dataKey].length > 0) {
+                const latestValue = chartData[dataKey][chartData[dataKey].length - 1];
+                document.getElementById('indicator-value').textContent = config.formatValue(latestValue);
+                
+                const status = config.getStatus(latestValue);
+                document.getElementById('indicator-status').textContent = status.text;
+                
+                const valueEl = document.getElementById('indicator-value');
+                valueEl.className = 'stat-value ' + status.class;
+            } else {
+                document.getElementById('indicator-value').textContent = '--';
+                document.getElementById('indicator-status').textContent = '';
+            }
         }
 
         function createBtcChart() {
@@ -417,11 +493,43 @@
             });
         }
 
-        function createIndicatorChart() {
+        function createIndicatorChart(indicator) {
+            const config = indicatorConfig[indicator];
             const ctx = document.getElementById('indicatorChart').getContext('2d');
 
             if (indicatorChart) {
                 indicatorChart.destroy();
+            }
+
+            const dataKey = config.dataKey;
+            const indicatorData = chartData[dataKey] || [];
+
+            // If no data available for this indicator
+            if (indicatorData.length === 0) {
+                indicatorChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            annotation: {
+                                annotations: {
+                                    noDataLabel: {
+                                        type: 'label',
+                                        xValue: 0.5,
+                                        yValue: 0.5,
+                                        content: 'Coming Soon',
+                                        color: '#71717a',
+                                        font: { size: 18 }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                return;
             }
 
             indicatorChart = new Chart(ctx, {
@@ -430,8 +538,8 @@
                     labels: chartData.dates,
                     datasets: [
                         {
-                            label: 'Fear & Greed',
-                            data: chartData.fng_index,
+                            label: config.label,
+                            data: indicatorData,
                             borderColor: '#ffffff',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
@@ -474,8 +582,8 @@
                                 },
                                 label: function(context) {
                                     const value = context.raw;
-                                    const status = getFngStatus(value);
-                                    return 'Fear & Greed: ' + value.toFixed(0) + ' (' + status.text + ')';
+                                    const status = config.getStatus(value);
+                                    return config.tooltipLabel(value, status);
                                 }
                             }
                         },
@@ -483,31 +591,31 @@
                             annotations: {
                                 redZone: {
                                     type: 'box',
-                                    yMin: 75,
-                                    yMax: 100,
-                                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                                    yMin: config.zones.high.value,
+                                    yMax: config.max,
+                                    backgroundColor: config.zones.high.color + ', 0.15)',
                                     borderWidth: 0
                                 },
                                 greenZone: {
                                     type: 'box',
-                                    yMin: 0,
-                                    yMax: 25,
-                                    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                                    yMin: config.min,
+                                    yMax: config.zones.low.value,
+                                    backgroundColor: config.zones.low.color + ', 0.15)',
                                     borderWidth: 0
                                 },
                                 redLine: {
                                     type: 'line',
-                                    yMin: 75,
-                                    yMax: 75,
-                                    borderColor: 'rgba(239, 68, 68, 0.8)',
+                                    yMin: config.zones.high.value,
+                                    yMax: config.zones.high.value,
+                                    borderColor: config.zones.high.color + ', 0.8)',
                                     borderWidth: 1,
                                     borderDash: [5, 5],
                                     label: {
                                         display: true,
-                                        content: '극단적 탐욕',
+                                        content: config.zones.high.label,
                                         position: 'end',
                                         backgroundColor: 'transparent',
-                                        color: 'rgba(239, 68, 68, 0.9)',
+                                        color: config.zones.high.color + ', 0.9)',
                                         font: {
                                             family: "'Noto Sans KR', sans-serif",
                                             size: 11,
@@ -517,17 +625,17 @@
                                 },
                                 greenLine: {
                                     type: 'line',
-                                    yMin: 25,
-                                    yMax: 25,
-                                    borderColor: 'rgba(34, 197, 94, 0.8)',
+                                    yMin: config.zones.low.value,
+                                    yMax: config.zones.low.value,
+                                    borderColor: config.zones.low.color + ', 0.8)',
                                     borderWidth: 1,
                                     borderDash: [5, 5],
                                     label: {
                                         display: true,
-                                        content: '극단적 공포',
+                                        content: config.zones.low.label,
                                         position: 'end',
                                         backgroundColor: 'transparent',
-                                        color: 'rgba(34, 197, 94, 0.9)',
+                                        color: config.zones.low.color + ', 0.9)',
                                         font: {
                                             family: "'Noto Sans KR', sans-serif",
                                             size: 11,
@@ -563,8 +671,8 @@
                         y: {
                             type: 'linear',
                             position: 'right',
-                            min: 0,
-                            max: 100,
+                            min: config.min,
+                            max: config.max,
                             grid: {
                                 color: '#27272a',
                                 drawBorder: false
@@ -574,13 +682,29 @@
                                 font: {
                                     family: "'JetBrains Mono', monospace",
                                     size: 11
-                                },
-                                stepSize: 25
+                                }
                             }
                         }
                     }
                 }
             });
+        }
+
+        function switchIndicator(indicator) {
+            currentIndicator = indicator;
+            
+            // Update tabs
+            document.querySelectorAll('.indicator-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.indicator === indicator) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update page info and charts
+            updatePageInfo(indicator);
+            updateStats(indicator);
+            createIndicatorChart(indicator);
         }
 
         async function init() {
@@ -604,23 +728,16 @@
                     })}`;
             }
 
-            updateStats();
+            // Initialize with Fear & Greed
+            updatePageInfo('fng');
+            updateStats('fng');
             createBtcChart();
-            createIndicatorChart();
+            createIndicatorChart('fng');
 
-            // Tab click handlers (for future VIX and Put/Call)
+            // Tab click handlers
             document.querySelectorAll('.indicator-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
-                    document.querySelectorAll('.indicator-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // Future: switch indicator based on tab.dataset.indicator
-                    // For now, only Fear & Greed is implemented
-                    if (tab.dataset.indicator !== 'fng') {
-                        alert('Coming soon!');
-                        document.querySelector('[data-indicator="fng"]').classList.add('active');
-                        tab.classList.remove('active');
-                    }
+                    switchIndicator(tab.dataset.indicator);
                 });
             });
         }
