@@ -2,6 +2,7 @@ name: Update Indicators Data
 
 on:
   schedule:
+    # Run at 7:00 AM UTC every day (after US market close)
     - cron: '0 7 * * *'
   workflow_dispatch:
 
@@ -22,7 +23,7 @@ jobs:
           python-version: '3.11'
       
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests yfinance
       
       - name: Fetch latest data
         run: python fetch_data.py
