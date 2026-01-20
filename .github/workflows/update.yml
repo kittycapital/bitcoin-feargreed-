@@ -1,4 +1,4 @@
-name: Update Fear & Greed Data
+name: Update Indicators Data
 
 on:
   schedule:
@@ -32,4 +32,4 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data.json
-          git diff --staged --quiet || (git commit -m "📊 Update Fear & Greed data - $(date +'%Y-%m-%d')" && git push)
+          git diff --staged --quiet || (git commit -m "📊 Update indicators data - $(date +'%Y-%m-%d')" && git push)
