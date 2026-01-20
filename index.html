@@ -165,6 +165,13 @@
             letter-spacing: 0.05em;
         }
 
+        .data-note {
+            font-size: 0.7rem;
+            color: #52525b;
+            font-style: italic;
+            margin-left: 8px;
+        }
+
         .last-updated {
             text-align: center;
             margin-top: 16px;
@@ -176,8 +183,33 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 350px;
+            height: 100%;
             color: #71717a;
+        }
+
+        .no-data-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #71717a;
+            text-align: center;
+        }
+
+        .no-data-message .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .no-data-message .text {
+            font-size: 0.875rem;
+        }
+
+        .no-data-message .subtext {
+            font-size: 0.75rem;
+            color: #52525b;
+            margin-top: 4px;
         }
 
         @media (max-width: 640px) {
@@ -249,8 +281,11 @@
 
         <!-- Indicator Chart -->
         <div class="chart-container">
-            <div class="chart-label" id="indicator-label">Fear & Greed Index</div>
-            <div class="chart-wrapper indicator">
+            <div class="chart-label">
+                <span id="indicator-label">Fear & Greed Index</span>
+                <span class="data-note" id="data-note"></span>
+            </div>
+            <div class="chart-wrapper indicator" id="indicator-wrapper">
                 <canvas id="indicatorChart"></canvas>
             </div>
         </div>
@@ -271,6 +306,7 @@
                 subtitle: 'Bitcoin Fear & Greed Index',
                 label: 'Fear & Greed Index',
                 statLabel: 'Fear & Greed',
+                datesKey: 'dates',
                 dataKey: 'fng_index',
                 zones: {
                     high: { value: 75, color: 'rgba(239, 68, 68', label: '극단적 탐욕' },
@@ -286,13 +322,15 @@
                     return { text: '극단적 탐욕', class: 'greed' };
                 },
                 formatValue: (v) => v.toFixed(0),
-                tooltipLabel: (v, status) => `Fear & Greed: ${v.toFixed(0)} (${status.text})`
+                tooltipLabel: (v, status) => `Fear & Greed: ${v.toFixed(0)} (${status.text})`,
+                note: ''
             },
             vix: {
                 title: '비트코인 변동성 지수',
                 subtitle: 'Bitcoin Volatility Index (DVOL)',
                 label: 'Volatility Index (DVOL)',
                 statLabel: 'DVOL',
+                datesKey: 'dates',
                 dataKey: 'vix_index',
                 zones: {
                     high: { value: 60, color: 'rgba(239, 68, 68', label: '고변동성' },
@@ -306,19 +344,21 @@
                     return { text: '고변동성', class: 'greed' };
                 },
                 formatValue: (v) => v.toFixed(1),
-                tooltipLabel: (v, status) => `DVOL: ${v.toFixed(1)} (${status.text})`
+                tooltipLabel: (v, status) => `DVOL: ${v.toFixed(1)} (${status.text})`,
+                note: ''
             },
             pcr: {
                 title: '비트코인 풋/콜 비율',
-                subtitle: 'Bitcoin Put/Call Ratio',
-                label: 'Put/Call Ratio',
+                subtitle: 'IBIT ETF Put/Call Ratio',
+                label: 'Put/Call Ratio (IBIT)',
                 statLabel: 'Put/Call',
+                datesKey: 'pcr_dates',
                 dataKey: 'pcr_index',
                 zones: {
                     high: { value: 0.7, color: 'rgba(239, 68, 68', label: '약세' },
                     low: { value: 0.5, color: 'rgba(34, 197, 94', label: '강세' }
                 },
-                min: 0.2,
+                min: 0.1,
                 max: 1.2,
                 getStatus: function(value) {
                     if (value <= 0.5) return { text: '강세', class: 'fear' };
@@ -326,7 +366,8 @@
                     return { text: '약세', class: 'greed' };
                 },
                 formatValue: (v) => v.toFixed(2),
-                tooltipLabel: (v, status) => `Put/Call: ${v.toFixed(2)} (${status.text})`
+                tooltipLabel: (v, status) => `Put/Call: ${v.toFixed(2)} (${status.text})`,
+                note: '(데이터 수집 중)'
             }
         };
 
@@ -362,6 +403,7 @@
             document.getElementById('page-subtitle').textContent = config.subtitle;
             document.getElementById('indicator-label').textContent = config.label;
             document.getElementById('indicator-stat-label').textContent = config.statLabel;
+            document.getElementById('data-note').textContent = config.note;
             document.title = config.title;
         }
 
@@ -372,15 +414,30 @@
             document.getElementById('btc-price').textContent = formatPrice(latestPrice);
             
             const dataKey = config.dataKey;
-            if (chartData[dataKey] && chartData[dataKey].length > 0) {
-                const latestValue = chartData[dataKey][chartData[dataKey].length - 1];
-                document.getElementById('indicator-value').textContent = config.formatValue(latestValue);
+            const data = chartData[dataKey];
+            
+            if (data && data.length > 0) {
+                // Find the last non-null value
+                let latestValue = null;
+                for (let i = data.length - 1; i >= 0; i--) {
+                    if (data[i] !== null) {
+                        latestValue = data[i];
+                        break;
+                    }
+                }
                 
-                const status = config.getStatus(latestValue);
-                document.getElementById('indicator-status').textContent = status.text;
-                
-                const valueEl = document.getElementById('indicator-value');
-                valueEl.className = 'stat-value ' + status.class;
+                if (latestValue !== null) {
+                    document.getElementById('indicator-value').textContent = config.formatValue(latestValue);
+                    
+                    const status = config.getStatus(latestValue);
+                    document.getElementById('indicator-status').textContent = status.text;
+                    
+                    const valueEl = document.getElementById('indicator-value');
+                    valueEl.className = 'stat-value ' + status.class;
+                } else {
+                    document.getElementById('indicator-value').textContent = '--';
+                    document.getElementById('indicator-status').textContent = '';
+                }
             } else {
                 document.getElementById('indicator-value').textContent = '--';
                 document.getElementById('indicator-status').textContent = '';
@@ -496,46 +553,40 @@
         function createIndicatorChart(indicator) {
             const config = indicatorConfig[indicator];
             const ctx = document.getElementById('indicatorChart').getContext('2d');
+            const wrapper = document.getElementById('indicator-wrapper');
 
             if (indicatorChart) {
                 indicatorChart.destroy();
             }
 
+            const datesKey = config.datesKey;
             const dataKey = config.dataKey;
+            const indicatorDates = chartData[datesKey] || [];
             const indicatorData = chartData[dataKey] || [];
 
-            // If no data available for this indicator
+            // If no data available for this indicator, show message
             if (indicatorData.length === 0) {
-                indicatorChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: [], datasets: [] },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            annotation: {
-                                annotations: {
-                                    noDataLabel: {
-                                        type: 'label',
-                                        xValue: 0.5,
-                                        yValue: 0.5,
-                                        content: 'Coming Soon',
-                                        color: '#71717a',
-                                        font: { size: 18 }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+                wrapper.innerHTML = `
+                    <div class="no-data-message">
+                        <div class="icon">📊</div>
+                        <div class="text">데이터 수집 중</div>
+                        <div class="subtext">Data is being collected daily</div>
+                    </div>
+                `;
                 return;
             }
 
-            indicatorChart = new Chart(ctx, {
+            // Make sure canvas exists
+            if (!document.getElementById('indicatorChart')) {
+                wrapper.innerHTML = '<canvas id="indicatorChart"></canvas>';
+            }
+
+            const chartCtx = document.getElementById('indicatorChart').getContext('2d');
+
+            indicatorChart = new Chart(chartCtx, {
                 type: 'line',
                 data: {
-                    labels: chartData.dates,
+                    labels: indicatorDates,
                     datasets: [
                         {
                             label: config.label,
@@ -544,9 +595,11 @@
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             tension: 0.4,
-                            pointRadius: 0,
+                            pointRadius: indicatorData.length < 30 ? 3 : 0,
                             pointHoverRadius: 4,
-                            pointHoverBackgroundColor: '#ffffff'
+                            pointBackgroundColor: '#ffffff',
+                            pointHoverBackgroundColor: '#ffffff',
+                            spanGaps: true
                         }
                     ]
                 },
@@ -572,7 +625,7 @@
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
-                                    const dateStr = chartData.dates[index];
+                                    const dateStr = indicatorDates[index];
                                     const date = getDateFromString(dateStr);
                                     return date.toLocaleDateString('en-US', {
                                         month: 'short',
@@ -582,6 +635,7 @@
                                 },
                                 label: function(context) {
                                     const value = context.raw;
+                                    if (value === null) return 'No data';
                                     const status = config.getStatus(value);
                                     return config.tooltipLabel(value, status);
                                 }
@@ -650,8 +704,9 @@
                         x: {
                             type: 'time',
                             time: {
-                                unit: 'month',
+                                unit: indicatorData.length < 60 ? 'week' : 'month',
                                 displayFormats: {
+                                    week: 'MMM d',
                                     month: 'MMM yyyy'
                                 }
                             },
@@ -701,6 +756,12 @@
                 }
             });
 
+            // Restore canvas if it was replaced with message
+            const wrapper = document.getElementById('indicator-wrapper');
+            if (!document.getElementById('indicatorChart')) {
+                wrapper.innerHTML = '<canvas id="indicatorChart"></canvas>';
+            }
+
             // Update page info and charts
             updatePageInfo(indicator);
             updateStats(indicator);
@@ -726,6 +787,11 @@
                         hour: '2-digit',
                         minute: '2-digit'
                     })}`;
+            }
+
+            // Update PCR note if we have data
+            if (chartData.pcr_dates && chartData.pcr_dates.length > 0) {
+                indicatorConfig.pcr.note = `(${chartData.pcr_dates.length}일 데이터)`;
             }
 
             // Initialize with Fear & Greed
