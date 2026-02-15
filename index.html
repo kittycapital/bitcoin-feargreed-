@@ -11,236 +11,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #0a0a0f;
-            color: #e4e4e7;
-            font-family: 'Noto Sans KR', sans-serif;
-            min-height: 100vh;
-            padding: 24px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .title-section h1 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 6px;
-            color: #ffffff;
-        }
-
-        .title-section p {
-            font-size: 0.875rem;
-            color: #71717a;
-        }
-
-        .stats {
-            display: flex;
-            gap: 32px;
-            flex-wrap: wrap;
-        }
-
-        .stat-card {
-            text-align: right;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #71717a;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 4px;
-        }
-
-        .stat-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .stat-value.price {
-            color: #e4e4e7;
-        }
-
-        .stat-value.fear {
-            color: #22c55e;
-        }
-
-        .stat-value.greed {
-            color: #ef4444;
-        }
-
-        .stat-value.neutral {
-            color: #f59e0b;
-        }
-
-        .stat-status {
-            font-size: 0.75rem;
-            margin-top: 2px;
-        }
-
-        /* Indicator Buttons */
-        .indicator-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .indicator-tab {
-            padding: 8px 16px;
-            background: #18181b;
-            border: 1px solid #27272a;
-            border-radius: 8px;
-            color: #71717a;
-            font-family: 'Noto Sans KR', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .indicator-tab:hover {
-            background: #27272a;
-            color: #a1a1aa;
-        }
-
-        .indicator-tab.active {
-            background: #22d3ee;
-            border-color: #22d3ee;
-            color: #0a0a0f;
-        }
-
-        .chart-container {
-            background: linear-gradient(180deg, #111118 0%, #0a0a0f 100%);
-            border: 1px solid #27272a;
-            border-radius: 16px;
-            padding: 24px;
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .chart-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #22d3ee33, transparent);
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 350px;
-        }
-
-        .chart-wrapper.indicator {
-            height: 175px;
-        }
-
-        .chart-label {
-            font-size: 0.75rem;
-            color: #71717a;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .data-note {
-            font-size: 0.7rem;
-            color: #52525b;
-            font-style: italic;
-            margin-left: 8px;
-        }
-
-        .last-updated {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 0.75rem;
-            color: #52525b;
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #71717a;
-        }
-
-        .no-data-message {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #71717a;
-            text-align: center;
-        }
-
-        .no-data-message .icon {
-            font-size: 2rem;
-            margin-bottom: 8px;
-        }
-
-        .no-data-message .text {
-            font-size: 0.875rem;
-        }
-
-        .no-data-message .subtext {
-            font-size: 0.75rem;
-            color: #52525b;
-            margin-top: 4px;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0f; color: #e4e4e7; font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; padding: 24px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .title-section h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; color: #ffffff; }
+        .title-section p { font-size: 0.875rem; color: #71717a; }
+        .stats { display: flex; gap: 32px; flex-wrap: wrap; }
+        .stat-card { text-align: right; }
+        .stat-label { font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 600; }
+        .stat-value.price { color: #e4e4e7; }
+        .stat-value.fear { color: #22c55e; }
+        .stat-value.greed { color: #ef4444; }
+        .stat-value.neutral { color: #f59e0b; }
+        .stat-status { font-size: 0.75rem; margin-top: 2px; }
+        .chart-container { background: linear-gradient(180deg, #111118 0%, #0a0a0f 100%); border: 1px solid #27272a; border-radius: 16px; padding: 24px; position: relative; overflow: hidden; margin-bottom: 16px; }
+        .chart-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, #22d3ee33, transparent); }
+        .chart-wrapper { position: relative; height: 350px; }
+        .chart-wrapper.indicator { height: 175px; }
+        .chart-label { font-size: 0.75rem; color: #71717a; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .last-updated { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #52525b; }
+        .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: #71717a; }
         @media (max-width: 640px) {
-            body {
-                padding: 16px;
-            }
-
-            .header {
-                flex-direction: column;
-            }
-
-            .stats {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .stat-card {
-                text-align: left;
-            }
-
-            .chart-wrapper {
-                height: 280px;
-            }
-
-            .chart-wrapper.indicator {
-                height: 140px;
-            }
-
-            .indicator-tabs {
-                flex-wrap: wrap;
-            }
+            body { padding: 16px; }
+            .header { flex-direction: column; }
+            .stats { width: 100%; justify-content: space-between; }
+            .stat-card { text-align: left; }
+            .chart-wrapper { height: 280px; }
+            .chart-wrapper.indicator { height: 140px; }
         }
     </style>
 </head>
@@ -248,8 +47,8 @@
     <div class="container">
         <div class="header">
             <div class="title-section">
-                <h1 id="page-title">비트코인 공포 탐욕 지수</h1>
-                <p id="page-subtitle">Bitcoin Fear & Greed Index</p>
+                <h1>비트코인 공포 탐욕 지수</h1>
+                <p>Bitcoin Fear & Greed Index</p>
             </div>
             <div class="stats">
                 <div class="stat-card">
@@ -257,21 +56,13 @@
                     <div class="stat-value price" id="btc-price">--</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label" id="indicator-stat-label">Fear & Greed</div>
-                    <div class="stat-value neutral" id="indicator-value">--</div>
-                    <div class="stat-status" id="indicator-status"></div>
+                    <div class="stat-label">Fear & Greed</div>
+                    <div class="stat-value neutral" id="fng-value">--</div>
+                    <div class="stat-status" id="fng-status"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Indicator Buttons -->
-        <div class="indicator-tabs">
-            <button class="indicator-tab active" data-indicator="fng">Fear & Greed</button>
-            <button class="indicator-tab" data-indicator="vix">VIX</button>
-            <button class="indicator-tab" data-indicator="pcr">Put/Call Ratio</button>
-        </div>
-
-        <!-- Bitcoin Price Chart -->
         <div class="chart-container">
             <div class="chart-label">Bitcoin Price (USD)</div>
             <div class="chart-wrapper">
@@ -279,14 +70,10 @@
             </div>
         </div>
 
-        <!-- Indicator Chart -->
         <div class="chart-container">
-            <div class="chart-label">
-                <span id="indicator-label">Fear & Greed Index</span>
-                <span class="data-note" id="data-note"></span>
-            </div>
-            <div class="chart-wrapper indicator" id="indicator-wrapper">
-                <canvas id="indicatorChart"></canvas>
+            <div class="chart-label">Fear & Greed Index</div>
+            <div class="chart-wrapper indicator">
+                <canvas id="fngChart"></canvas>
             </div>
         </div>
 
@@ -295,101 +82,9 @@
 
     <script>
         let chartData = null;
-        let btcChart = null;
-        let indicatorChart = null;
-        let currentIndicator = 'fng';
-
-        // Indicator configurations
-        const indicatorConfig = {
-            fng: {
-                title: '비트코인 공포 탐욕 지수',
-                subtitle: 'Bitcoin Fear & Greed Index',
-                label: 'Fear & Greed Index',
-                statLabel: 'Fear & Greed',
-                datesKey: 'dates',
-                dataKey: 'fng_index',
-                zones: {
-                    high: { value: 75, color: 'rgba(239, 68, 68', label: '극단적 탐욕' },
-                    low: { value: 25, color: 'rgba(34, 197, 94', label: '극단적 공포' }
-                },
-                min: 0,
-                max: 100,
-                getStatus: function(value) {
-                    if (value <= 25) return { text: '극단적 공포', class: 'fear' };
-                    if (value <= 45) return { text: '공포', class: 'fear' };
-                    if (value <= 55) return { text: '중립', class: 'neutral' };
-                    if (value <= 75) return { text: '탐욕', class: 'greed' };
-                    return { text: '극단적 탐욕', class: 'greed' };
-                },
-                formatValue: (v) => v.toFixed(0),
-                tooltipLabel: (v, status) => `Fear & Greed: ${v.toFixed(0)} (${status.text})`,
-                note: ''
-            },
-            vix: {
-                title: '비트코인 변동성 지수',
-                subtitle: 'Bitcoin Volatility Index (DVOL)',
-                label: 'Volatility Index (DVOL)',
-                statLabel: 'DVOL',
-                datesKey: 'dates',
-                dataKey: 'vix_index',
-                zones: {
-                    high: { value: 60, color: 'rgba(239, 68, 68', label: '고변동성' },
-                    low: { value: 40, color: 'rgba(34, 197, 94', label: '저변동성' }
-                },
-                min: 20,
-                max: 100,
-                getStatus: function(value) {
-                    if (value <= 40) return { text: '저변동성', class: 'fear' };
-                    if (value <= 60) return { text: '보통', class: 'neutral' };
-                    return { text: '고변동성', class: 'greed' };
-                },
-                formatValue: (v) => v.toFixed(1),
-                tooltipLabel: (v, status) => `DVOL: ${v.toFixed(1)} (${status.text})`,
-                note: ''
-            },
-            pcr: {
-                title: '비트코인 풋/콜 비율',
-                subtitle: 'IBIT ETF Put/Call Ratio',
-                label: 'Put/Call Ratio (IBIT)',
-                statLabel: 'Put/Call',
-                datesKey: 'pcr_dates',
-                dataKey: 'pcr_index',
-                zones: {
-                    high: { value: 0.7, color: 'rgba(239, 68, 68', label: '약세' },
-                    low: { value: 0.5, color: 'rgba(34, 197, 94', label: '강세' }
-                },
-                min: 0.1,
-                max: 1.2,
-                getStatus: function(value) {
-                    if (value <= 0.5) return { text: '강세', class: 'fear' };
-                    if (value <= 0.7) return { text: '중립', class: 'neutral' };
-                    return { text: '약세', class: 'greed' };
-                },
-                formatValue: (v) => v.toFixed(2),
-                tooltipLabel: (v, status) => `Put/Call: ${v.toFixed(2)} (${status.text})`,
-                note: '(데이터 수집 중)'
-            }
-        };
-
-        async function loadData() {
-            try {
-                const response = await fetch('data.json');
-                if (!response.ok) throw new Error('Data not found');
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('Error loading data:', error);
-                return null;
-            }
-        }
 
         function formatPrice(price) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(price);
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
         }
 
         function getDateFromString(dateStr) {
@@ -397,415 +92,143 @@
             return new Date(parts[0], parts[1] - 1, parts[2]);
         }
 
-        function updatePageInfo(indicator) {
-            const config = indicatorConfig[indicator];
-            document.getElementById('page-title').textContent = config.title;
-            document.getElementById('page-subtitle').textContent = config.subtitle;
-            document.getElementById('indicator-label').textContent = config.label;
-            document.getElementById('indicator-stat-label').textContent = config.statLabel;
-            document.getElementById('data-note').textContent = config.note;
-            document.title = config.title;
+        function getFngStatus(value) {
+            if (value <= 25) return { text: '극단적 공포', class: 'fear' };
+            if (value <= 45) return { text: '공포', class: 'fear' };
+            if (value <= 55) return { text: '중립', class: 'neutral' };
+            if (value <= 75) return { text: '탐욕', class: 'greed' };
+            return { text: '극단적 탐욕', class: 'greed' };
         }
 
-        function updateStats(indicator) {
-            const config = indicatorConfig[indicator];
+        function updateStats() {
             const latestPrice = chartData.btc_prices[chartData.btc_prices.length - 1];
-            
             document.getElementById('btc-price').textContent = formatPrice(latestPrice);
-            
-            const dataKey = config.dataKey;
-            const data = chartData[dataKey];
-            
-            if (data && data.length > 0) {
-                // Find the last non-null value
+
+            const fngData = chartData.fng_index;
+            if (fngData && fngData.length > 0) {
                 let latestValue = null;
-                for (let i = data.length - 1; i >= 0; i--) {
-                    if (data[i] !== null) {
-                        latestValue = data[i];
-                        break;
-                    }
+                for (let i = fngData.length - 1; i >= 0; i--) {
+                    if (fngData[i] !== null) { latestValue = fngData[i]; break; }
                 }
-                
                 if (latestValue !== null) {
-                    document.getElementById('indicator-value').textContent = config.formatValue(latestValue);
-                    
-                    const status = config.getStatus(latestValue);
-                    document.getElementById('indicator-status').textContent = status.text;
-                    
-                    const valueEl = document.getElementById('indicator-value');
-                    valueEl.className = 'stat-value ' + status.class;
-                } else {
-                    document.getElementById('indicator-value').textContent = '--';
-                    document.getElementById('indicator-status').textContent = '';
+                    const status = getFngStatus(latestValue);
+                    document.getElementById('fng-value').textContent = latestValue.toFixed(0);
+                    document.getElementById('fng-value').className = 'stat-value ' + status.class;
+                    document.getElementById('fng-status').textContent = status.text;
                 }
-            } else {
-                document.getElementById('indicator-value').textContent = '--';
-                document.getElementById('indicator-status').textContent = '';
             }
         }
 
         function createBtcChart() {
-            const btcCtx = document.getElementById('btcChart').getContext('2d');
-            
-            if (btcChart) {
-                btcChart.destroy();
-            }
-
-            btcChart = new Chart(btcCtx, {
+            new Chart(document.getElementById('btcChart').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: chartData.dates,
-                    datasets: [
-                        {
-                            label: 'Bitcoin Price',
-                            data: chartData.btc_prices,
-                            borderColor: '#71717a',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
-                            pointHoverBackgroundColor: '#71717a'
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Bitcoin Price',
+                        data: chartData.btc_prices,
+                        borderColor: '#71717a',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 4, pointHoverBackgroundColor: '#71717a'
+                    }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#18181b',
-                            borderColor: '#27272a',
-                            borderWidth: 1,
-                            titleColor: '#e4e4e7',
-                            bodyColor: '#a1a1aa',
-                            padding: 12,
-                            displayColors: false,
+                            backgroundColor: '#18181b', borderColor: '#27272a', borderWidth: 1,
+                            titleColor: '#e4e4e7', bodyColor: '#a1a1aa', padding: 12, displayColors: false,
                             callbacks: {
-                                title: function(context) {
-                                    const index = context[0].dataIndex;
-                                    const dateStr = chartData.dates[index];
-                                    const date = getDateFromString(dateStr);
-                                    return date.toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    });
+                                title: function(ctx) {
+                                    const date = getDateFromString(chartData.dates[ctx[0].dataIndex]);
+                                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                                 },
-                                label: function(context) {
-                                    return 'BTC: ' + formatPrice(context.raw);
-                                }
+                                label: function(ctx) { return 'BTC: ' + formatPrice(ctx.raw); }
                             }
                         }
                     },
                     scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'month',
-                                displayFormats: {
-                                    month: 'MMM yyyy'
-                                }
-                            },
-                            grid: {
-                                color: '#27272a',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#52525b',
-                                font: {
-                                    family: "'JetBrains Mono', monospace",
-                                    size: 11
-                                },
-                                maxTicksLimit: 8
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            position: 'left',
-                            grid: {
-                                color: '#27272a',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#52525b',
-                                font: {
-                                    family: "'JetBrains Mono', monospace",
-                                    size: 11
-                                },
-                                callback: function(value) {
-                                    return '$' + (value / 1000).toFixed(0) + 'k';
-                                }
-                            }
-                        }
+                        x: { type: 'time', time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } }, grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 }, maxTicksLimit: 8 } },
+                        y: { type: 'linear', position: 'left', grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 }, callback: v => '$' + (v / 1000).toFixed(0) + 'k' } }
                     }
                 }
             });
         }
 
-        function createIndicatorChart(indicator) {
-            const config = indicatorConfig[indicator];
-            const ctx = document.getElementById('indicatorChart').getContext('2d');
-            const wrapper = document.getElementById('indicator-wrapper');
-
-            if (indicatorChart) {
-                indicatorChart.destroy();
-            }
-
-            const datesKey = config.datesKey;
-            const dataKey = config.dataKey;
-            const indicatorDates = chartData[datesKey] || [];
-            const indicatorData = chartData[dataKey] || [];
-
-            // If no data available for this indicator, show message
-            if (indicatorData.length === 0) {
-                wrapper.innerHTML = `
-                    <div class="no-data-message">
-                        <div class="icon">📊</div>
-                        <div class="text">데이터 수집 중</div>
-                        <div class="subtext">Data is being collected daily</div>
-                    </div>
-                `;
-                return;
-            }
-
-            // Make sure canvas exists
-            if (!document.getElementById('indicatorChart')) {
-                wrapper.innerHTML = '<canvas id="indicatorChart"></canvas>';
-            }
-
-            const chartCtx = document.getElementById('indicatorChart').getContext('2d');
-
-            indicatorChart = new Chart(chartCtx, {
+        function createFngChart() {
+            new Chart(document.getElementById('fngChart').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: indicatorDates,
-                    datasets: [
-                        {
-                            label: config.label,
-                            data: indicatorData,
-                            borderColor: '#ffffff',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            pointRadius: indicatorData.length < 30 ? 3 : 0,
-                            pointHoverRadius: 4,
-                            pointBackgroundColor: '#ffffff',
-                            pointHoverBackgroundColor: '#ffffff',
-                            spanGaps: true
-                        }
-                    ]
+                    labels: chartData.dates,
+                    datasets: [{
+                        label: 'Fear & Greed Index',
+                        data: chartData.fng_index,
+                        borderColor: '#ffffff',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 4, pointBackgroundColor: '#ffffff', pointHoverBackgroundColor: '#ffffff', spanGaps: true
+                    }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#18181b',
-                            borderColor: '#27272a',
-                            borderWidth: 1,
-                            titleColor: '#e4e4e7',
-                            bodyColor: '#a1a1aa',
-                            padding: 12,
-                            displayColors: false,
+                            backgroundColor: '#18181b', borderColor: '#27272a', borderWidth: 1,
+                            titleColor: '#e4e4e7', bodyColor: '#a1a1aa', padding: 12, displayColors: false,
                             callbacks: {
-                                title: function(context) {
-                                    const index = context[0].dataIndex;
-                                    const dateStr = indicatorDates[index];
-                                    const date = getDateFromString(dateStr);
-                                    return date.toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    });
+                                title: function(ctx) {
+                                    const date = getDateFromString(chartData.dates[ctx[0].dataIndex]);
+                                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                                 },
-                                label: function(context) {
-                                    const value = context.raw;
-                                    if (value === null) return 'No data';
-                                    const status = config.getStatus(value);
-                                    return config.tooltipLabel(value, status);
+                                label: function(ctx) {
+                                    if (ctx.raw === null) return 'No data';
+                                    const status = getFngStatus(ctx.raw);
+                                    return 'Fear & Greed: ' + ctx.raw.toFixed(0) + ' (' + status.text + ')';
                                 }
                             }
                         },
                         annotation: {
                             annotations: {
-                                redZone: {
-                                    type: 'box',
-                                    yMin: config.zones.high.value,
-                                    yMax: config.max,
-                                    backgroundColor: config.zones.high.color + ', 0.15)',
-                                    borderWidth: 0
-                                },
-                                greenZone: {
-                                    type: 'box',
-                                    yMin: config.min,
-                                    yMax: config.zones.low.value,
-                                    backgroundColor: config.zones.low.color + ', 0.15)',
-                                    borderWidth: 0
-                                },
-                                redLine: {
-                                    type: 'line',
-                                    yMin: config.zones.high.value,
-                                    yMax: config.zones.high.value,
-                                    borderColor: config.zones.high.color + ', 0.8)',
-                                    borderWidth: 1,
-                                    borderDash: [5, 5],
-                                    label: {
-                                        display: true,
-                                        content: config.zones.high.label,
-                                        position: 'end',
-                                        backgroundColor: 'transparent',
-                                        color: config.zones.high.color + ', 0.9)',
-                                        font: {
-                                            family: "'Noto Sans KR', sans-serif",
-                                            size: 11,
-                                            weight: '500'
-                                        }
-                                    }
-                                },
-                                greenLine: {
-                                    type: 'line',
-                                    yMin: config.zones.low.value,
-                                    yMax: config.zones.low.value,
-                                    borderColor: config.zones.low.color + ', 0.8)',
-                                    borderWidth: 1,
-                                    borderDash: [5, 5],
-                                    label: {
-                                        display: true,
-                                        content: config.zones.low.label,
-                                        position: 'end',
-                                        backgroundColor: 'transparent',
-                                        color: config.zones.low.color + ', 0.9)',
-                                        font: {
-                                            family: "'Noto Sans KR', sans-serif",
-                                            size: 11,
-                                            weight: '500'
-                                        }
-                                    }
-                                }
+                                redZone: { type: 'box', yMin: 75, yMax: 100, backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 0 },
+                                greenZone: { type: 'box', yMin: 0, yMax: 25, backgroundColor: 'rgba(34, 197, 94, 0.15)', borderWidth: 0 },
+                                redLine: { type: 'line', yMin: 75, yMax: 75, borderColor: 'rgba(239, 68, 68, 0.8)', borderWidth: 1, borderDash: [5, 5], label: { display: true, content: '극단적 탐욕', position: 'end', backgroundColor: 'transparent', color: 'rgba(239, 68, 68, 0.9)', font: { family: "'Noto Sans KR', sans-serif", size: 11, weight: '500' } } },
+                                greenLine: { type: 'line', yMin: 25, yMax: 25, borderColor: 'rgba(34, 197, 94, 0.8)', borderWidth: 1, borderDash: [5, 5], label: { display: true, content: '극단적 공포', position: 'end', backgroundColor: 'transparent', color: 'rgba(34, 197, 94, 0.9)', font: { family: "'Noto Sans KR', sans-serif", size: 11, weight: '500' } } }
                             }
                         }
                     },
                     scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: indicatorData.length < 60 ? 'week' : 'month',
-                                displayFormats: {
-                                    week: 'MMM d',
-                                    month: 'MMM yyyy'
-                                }
-                            },
-                            grid: {
-                                color: '#27272a',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#52525b',
-                                font: {
-                                    family: "'JetBrains Mono', monospace",
-                                    size: 11
-                                },
-                                maxTicksLimit: 8
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            position: 'right',
-                            min: config.min,
-                            max: config.max,
-                            grid: {
-                                color: '#27272a',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#52525b',
-                                font: {
-                                    family: "'JetBrains Mono', monospace",
-                                    size: 11
-                                }
-                            }
-                        }
+                        x: { type: 'time', time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } }, grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 }, maxTicksLimit: 8 } },
+                        y: { type: 'linear', position: 'right', min: 0, max: 100, grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 } } }
                     }
                 }
             });
         }
 
-        function switchIndicator(indicator) {
-            currentIndicator = indicator;
-            
-            // Update tabs
-            document.querySelectorAll('.indicator-tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.dataset.indicator === indicator) {
-                    tab.classList.add('active');
-                }
-            });
-
-            // Restore canvas if it was replaced with message
-            const wrapper = document.getElementById('indicator-wrapper');
-            if (!document.getElementById('indicatorChart')) {
-                wrapper.innerHTML = '<canvas id="indicatorChart"></canvas>';
-            }
-
-            // Update page info and charts
-            updatePageInfo(indicator);
-            updateStats(indicator);
-            createIndicatorChart(indicator);
-        }
-
         async function init() {
-            chartData = await loadData();
-            
-            if (!chartData || !chartData.dates || chartData.dates.length === 0) {
-                document.querySelector('.chart-wrapper').innerHTML = 
-                    '<div class="loading">Loading chart data...</div>';
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Data not found');
+                chartData = await response.json();
+            } catch (e) {
+                document.querySelector('.chart-wrapper').innerHTML = '<div class="loading">Loading chart data...</div>';
                 return;
             }
 
-            // Update last updated time
+            if (!chartData || !chartData.dates || chartData.dates.length === 0) {
+                document.querySelector('.chart-wrapper').innerHTML = '<div class="loading">Loading chart data...</div>';
+                return;
+            }
+
             if (chartData.last_updated) {
-                document.getElementById('last-updated').textContent = 
-                    `Last updated: ${new Date(chartData.last_updated).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}`;
+                document.getElementById('last-updated').textContent = 'Last updated: ' + new Date(chartData.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             }
 
-            // Update PCR note if we have data
-            if (chartData.pcr_dates && chartData.pcr_dates.length > 0) {
-                indicatorConfig.pcr.note = `(${chartData.pcr_dates.length}일 데이터)`;
-            }
-
-            // Initialize with Fear & Greed
-            updatePageInfo('fng');
-            updateStats('fng');
+            updateStats();
             createBtcChart();
-            createIndicatorChart('fng');
-
-            // Tab click handlers
-            document.querySelectorAll('.indicator-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    switchIndicator(tab.dataset.indicator);
-                });
-            });
+            createFngChart();
         }
 
         init();
