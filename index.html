@@ -1,237 +1,295 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>비트코인 공포 탐욕 지수</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0a0a0f; color: #e4e4e7; font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; padding: 24px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-        .title-section h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px; color: #ffffff; }
-        .title-section p { font-size: 0.875rem; color: #71717a; }
-        .stats { display: flex; gap: 32px; flex-wrap: wrap; }
-        .stat-card { text-align: right; }
-        .stat-label { font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 600; }
-        .stat-value.price { color: #e4e4e7; }
-        .stat-value.fear { color: #22c55e; }
-        .stat-value.greed { color: #ef4444; }
-        .stat-value.neutral { color: #f59e0b; }
-        .stat-status { font-size: 0.75rem; margin-top: 2px; }
-        .chart-container { background: linear-gradient(180deg, #111118 0%, #0a0a0f 100%); border: 1px solid #27272a; border-radius: 16px; padding: 24px; position: relative; overflow: hidden; margin-bottom: 16px; }
-        .chart-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, #22d3ee33, transparent); }
-        .chart-wrapper { position: relative; height: 350px; }
-        .chart-wrapper.indicator { height: 175px; }
-        .chart-label { font-size: 0.75rem; color: #71717a; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .last-updated { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #52525b; }
-        .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: #71717a; }
-        @media (max-width: 640px) {
-            body { padding: 16px; }
-            .header { flex-direction: column; }
-            .stats { width: 100%; justify-content: space-between; }
-            .stat-card { text-align: left; }
-            .chart-wrapper { height: 280px; }
-            .chart-wrapper.indicator { height: 140px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>비트코인 공포 탐욕 지수 | Herdvibe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js" crossorigin="anonymous" async></script>
+<style>
+:root{--hv-primary:#3b82f6;--hv-primary-light:#60a5fa;--hv-primary-dark:#2563eb;--hv-primary-glow:rgba(59,130,246,0.12);--hv-up:#22c55e;--hv-up-bg:rgba(34,197,94,0.1);--hv-down:#ef4444;--hv-down-bg:rgba(239,68,68,0.1);--hv-warning:#f59e0b;--hv-warning-bg:rgba(245,158,11,0.1);--hv-neutral:#6b7280;--hv-bg-base:#000;--hv-bg-surface:#0a0a0a;--hv-bg-card:#111;--hv-bg-card-hover:#181818;--hv-bg-elevated:#1a1a1a;--hv-text-primary:#e5e5e5;--hv-text-secondary:#8a8a8a;--hv-text-tertiary:#555;--hv-text-muted:#3a3a3a;--hv-border:rgba(255,255,255,0.06);--hv-border-strong:rgba(255,255,255,0.12);--hv-font-display:'Plus Jakarta Sans',sans-serif;--hv-font-body:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;--hv-font-mono:'JetBrains Mono','SF Mono',monospace;--hv-space-xs:8px;--hv-space-sm:12px;--hv-space-md:16px;--hv-space-lg:24px;--hv-space-xl:32px;--hv-radius-sm:6px;--hv-radius-md:10px;--hv-radius-lg:14px;--hv-shadow-sm:0 1px 3px rgba(0,0,0,.5);--hv-shadow-lg:0 8px 32px rgba(0,0,0,.7);--hv-transition-fast:150ms ease;--hv-transition:250ms ease;--hv-max-width:1280px;--hv-header-height:60px;--blue:#4a9eff;--cyan:#00e5cc;--red:#ff4a6a;--orange:#ff8c42;--yellow:#ffd642;--green:#42ff8c;--purple:#a855f7}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{font-family:var(--hv-font-body);background:var(--hv-bg-base);color:var(--hv-text-primary);line-height:1.6;overflow-x:hidden;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none}
+body::-webkit-scrollbar{display:none}
+::selection{background:var(--hv-primary);color:#fff}
+
+.hv-header{position:sticky;top:0;z-index:100;height:var(--hv-header-height);background:rgba(0,0,0,.9);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--hv-border);display:flex;align-items:center;padding:0 var(--hv-space-lg)}
+.hv-header-inner{width:100%;max-width:var(--hv-max-width);margin:0 auto;display:flex;align-items:center;justify-content:center;gap:var(--hv-space-md)}
+.hv-header-center{display:flex;flex-direction:column;min-width:0;text-align:center}
+.hv-header-center h1{font-family:var(--hv-font-display);font-size:1.3rem;font-weight:600;color:var(--hv-text-primary);white-space:nowrap}
+.hv-header-category{font-size:.7rem;color:var(--hv-text-tertiary);font-weight:500;text-transform:uppercase;letter-spacing:.08em}
+.hv-header-right{display:flex;align-items:center;gap:var(--hv-space-xs);flex-shrink:0}
+.hv-update-badge{font-family:var(--hv-font-mono);font-size:.688rem;color:var(--hv-text-tertiary);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.hv-live-dot{width:5px;height:5px;background:var(--hv-up);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.hv-page{max-width:var(--hv-max-width);margin:0 auto;padding:var(--hv-space-lg)}
+.dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:var(--hv-bg-card);border:1px solid var(--hv-border);border-radius:var(--hv-radius-lg);padding:18px 20px 16px;position:relative;overflow:visible;animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card-label{font-family:var(--hv-font-mono);font-size:10px;font-weight:500;color:var(--hv-text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;text-align:center}
+.card-title{font-size:15px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;justify-content:center;gap:7px}
+.card-desc{font-size:11.5px;color:var(--hv-text-secondary);margin-bottom:14px;line-height:1.5;text-align:center}
+.s12{grid-column:span 12}.s5{grid-column:span 5}.s7{grid-column:span 7}
+
+/* GAUGE */
+.gauge-container{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 0}
+.gauge-svg{width:260px;height:150px}
+.gauge-value{font-family:var(--hv-font-mono);font-size:52px;font-weight:700;line-height:1;margin-top:-8px}
+.gauge-label{display:inline-block;margin-top:10px;padding:5px 16px;border-radius:20px;font-size:13px;font-weight:600;letter-spacing:.5px}
+.gauge-label.extreme-fear{background:rgba(239,68,68,0.15);color:#ef4444}
+.gauge-label.fear{background:rgba(249,115,22,0.15);color:#f97316}
+.gauge-label.neutral{background:rgba(245,158,11,0.15);color:#f59e0b}
+.gauge-label.greed{background:rgba(132,204,22,0.15);color:#84cc16}
+.gauge-label.extreme-greed{background:rgba(34,197,94,0.15);color:#22c55e}
+.gauge-scale{display:flex;justify-content:space-between;width:240px;margin-top:10px;font-family:var(--hv-font-mono);font-size:11px;color:var(--hv-text-tertiary)}
+.gauge-updated{font-size:10px;color:var(--hv-text-tertiary);margin-top:12px;font-family:var(--hv-font-mono)}
+
+/* STATS */
+.fng-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.fng-stat{background:rgba(255,255,255,.02);border:1px solid var(--hv-border);border-radius:8px;padding:12px 14px;text-align:center}
+.fng-stat-label{font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.fng-stat-val{font-family:var(--hv-font-mono);font-size:20px;font-weight:700}
+.fng-stat-sub{font-size:10px;color:var(--hv-text-secondary);margin-top:3px}
+
+.rate-bar{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:10px}
+.rate-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--hv-text-secondary)}
+.rate-val{font-family:var(--hv-font-mono);font-weight:600;color:var(--hv-text-primary);font-size:13px}
+.status-bar{display:flex;gap:14px;font-size:10px;color:var(--hv-text-tertiary);flex-wrap:wrap;justify-content:center}
+.ok{color:var(--green)}.fl{color:var(--red)}
+.pos{color:var(--green)}.neg{color:var(--red)}
+
+/* CHART */
+.chart-wrap{position:relative;width:100%;height:300px}
+.chart-wrap canvas{width:100%!important;height:100%!important}
+
+/* SHARE */
+.share-bar{display:flex;align-items:center;justify-content:space-between;padding:12px var(--hv-space-lg);border-top:1px solid var(--hv-border);background:var(--hv-bg-surface);border-radius:0 0 var(--hv-radius-lg) var(--hv-radius-lg)}
+.share-bar-preview{font-size:.75rem;color:var(--hv-text-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%;line-height:1.4;font-family:var(--hv-font-mono)}
+.share-bar-preview span{color:var(--hv-text-secondary);font-weight:500}
+.share-bar-buttons{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:.75rem;font-weight:600;font-family:var(--hv-font-body);cursor:pointer;transition:all var(--hv-transition-fast);border:1px solid var(--hv-border-strong);background:var(--hv-bg-card);color:#999;white-space:nowrap}
+.share-btn:hover{transform:translateY(-1px);box-shadow:var(--hv-shadow-sm);color:var(--hv-text-primary)}
+.share-btn svg{flex-shrink:0}
+.share-btn--x:hover{border-color:#fff;color:#fff;background:#111}
+.share-btn--kakao:hover{border-color:#FEE500;color:#191919;background:#FEE500}
+.share-btn--tg:hover{border-color:#26A5E4;color:#fff;background:rgba(38,165,228,.15)}
+.share-btn--ig:hover{border-color:#E4405F;color:#fff;background:rgba(228,64,95,.15)}
+.share-btn--copy:hover{border-color:var(--hv-primary);color:var(--hv-primary-light);background:var(--hv-primary-glow)}
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--hv-bg-elevated);border:1px solid var(--hv-border-strong);border-radius:var(--hv-radius-md);padding:10px 18px;font-size:.788rem;color:var(--hv-text-primary);box-shadow:var(--hv-shadow-lg);animation:toastIn .3s ease;border-left:3px solid var(--hv-up)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.loading{display:flex;align-items:center;justify-content:center;height:120px;color:var(--hv-text-tertiary);font-size:13px}
+.spinner{width:16px;height:16px;border:2px solid var(--hv-border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:1024px){.s5,.s7{grid-column:span 12}}
+@media(max-width:768px){
+  :root{--hv-header-height:52px}
+  .hv-page{padding:var(--hv-space-md)}.hv-header{padding:0 var(--hv-space-md)}
+  .hv-update-badge{display:none}.dash-grid{gap:10px}
+  .card{padding:14px 14px 12px}.card-title{font-size:14px}
+  .chart-wrap{height:240px}
+  .fng-stats{grid-template-columns:repeat(2,1fr)}
+  .gauge-svg{width:220px;height:130px}
+  .gauge-value{font-size:42px}
+  .share-bar{flex-direction:column;gap:10px;align-items:stretch}
+  .share-bar-preview{max-width:100%}
+  .share-bar-buttons{justify-content:center;flex-wrap:wrap}
+  .share-btn span.label-text{display:none}.share-btn{padding:8px 10px}
+}
+@media(max-width:520px){.hv-page{padding:12px 10px 24px}.fng-stats{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="title-section">
-                <h1>비트코인 공포 탐욕 지수</h1>
-                <p>Bitcoin Fear & Greed Index</p>
-            </div>
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-label">Bitcoin Price</div>
-                    <div class="stat-value price" id="btc-price">--</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Fear & Greed</div>
-                    <div class="stat-value neutral" id="fng-value">--</div>
-                    <div class="stat-status" id="fng-status"></div>
-                </div>
-            </div>
-        </div>
 
-        <div class="chart-container">
-            <div class="chart-label">Bitcoin Price (USD)</div>
-            <div class="chart-wrapper">
-                <canvas id="btcChart"></canvas>
-            </div>
-        </div>
+<header class="hv-header">
+  <div class="hv-header-inner">
+    <div class="hv-header-center">
+      <h1>비트코인 공포 탐욕 지수</h1>
+      <span class="hv-header-category">Fear & Greed Index</span>
+    </div>
+    <div class="hv-header-right">
+      <div class="hv-update-badge"><span class="hv-live-dot"></span><span id="lastTime">—</span></div>
+    </div>
+  </div>
+</header>
 
-        <div class="chart-container">
-            <div class="chart-label">Fear & Greed Index</div>
-            <div class="chart-wrapper indicator">
-                <canvas id="fngChart"></canvas>
-            </div>
-        </div>
+<div class="hv-page">
+  <div class="dash-grid">
 
-        <div class="last-updated" id="last-updated"></div>
+    <!-- GAUGE -->
+    <div class="card s5" style="animation-delay:.05s">
+      <div class="card-label">CURRENT INDEX</div>
+      <div class="card-title">🎯 현재 공포 탐욕 지수</div>
+      <div class="gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 280 160">
+          <path d="M30,145 A110,110 0 0,1 68.6,52.4" fill="none" stroke="#ef4444" stroke-width="18" stroke-linecap="round"/>
+          <path d="M68.6,52.4 A110,110 0 0,1 121,37" fill="none" stroke="#f97316" stroke-width="18" stroke-linecap="round"/>
+          <path d="M121,37 A110,110 0 0,1 159,37" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>
+          <path d="M159,37 A110,110 0 0,1 211.4,52.4" fill="none" stroke="#84cc16" stroke-width="18" stroke-linecap="round"/>
+          <path d="M211.4,52.4 A110,110 0 0,1 250,145" fill="none" stroke="#22c55e" stroke-width="18" stroke-linecap="round"/>
+          <line id="gaugeNeedle" x1="140" y1="145" x2="140" y2="50" stroke="#fff" stroke-width="3" stroke-linecap="round" style="transform-origin:140px 145px;transition:transform 1.5s cubic-bezier(.4,0,.2,1)"/>
+          <circle cx="140" cy="145" r="6" fill="#fff"/>
+        </svg>
+        <div class="gauge-value" id="gaugeValue">--</div>
+        <div class="gauge-label neutral" id="gaugeLabel">—</div>
+        <div class="gauge-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        <div class="gauge-updated" id="gaugeUpdated"></div>
+      </div>
     </div>
 
-    <script>
-        let chartData = null;
+    <!-- OVERVIEW -->
+    <div class="card s7" style="animation-delay:.1s">
+      <div class="card-label">OVERVIEW</div>
+      <div class="card-title">📊 지수 요약</div>
+      <div class="card-desc">Bitcoin Price & Fear/Greed Summary</div>
+      <div class="fng-stats">
+        <div class="fng-stat"><div class="fng-stat-label">Bitcoin</div><div class="fng-stat-val" id="btcPrice">—</div><div class="fng-stat-sub">현재 가격</div></div>
+        <div class="fng-stat"><div class="fng-stat-label">오늘</div><div class="fng-stat-val" id="fngToday">—</div><div class="fng-stat-sub" id="fngTodayStatus">—</div></div>
+        <div class="fng-stat"><div class="fng-stat-label">어제</div><div class="fng-stat-val" id="fngYesterday">—</div><div class="fng-stat-sub" id="fngYesterdayStatus">—</div></div>
+        <div class="fng-stat"><div class="fng-stat-label">1주 평균</div><div class="fng-stat-val" id="fngWeek">—</div><div class="fng-stat-sub" id="fngWeekStatus">—</div></div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="rate-bar">
+          <div class="rate-item">24h 변화: <span class="rate-val" id="fngChange">—</span></div>
+          <div class="rate-item">30일 최저: <span class="rate-val" id="fng30Low">—</span></div>
+          <div class="rate-item">30일 최고: <span class="rate-val" id="fng30High">—</span></div>
+        </div>
+        <div class="status-bar"><span>데이터: <span id="dataStatus" class="ok">—</span></span></div>
+      </div>
+    </div>
 
-        function formatPrice(price) {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
-        }
+    <!-- BTC CHART -->
+    <div class="card s12" style="animation-delay:.15s">
+      <div class="card-label">BITCOIN PRICE</div>
+      <div class="card-title">💰 비트코인 가격</div>
+      <div class="card-desc">Bitcoin Price (USD)</div>
+      <div class="chart-wrap" style="height:280px"><canvas id="btcChart"></canvas></div>
+    </div>
 
-        function getDateFromString(dateStr) {
-            const parts = dateStr.split('-');
-            return new Date(parts[0], parts[1] - 1, parts[2]);
-        }
+    <!-- FNG CHART -->
+    <div class="card s12" style="animation-delay:.2s">
+      <div class="card-label">FEAR & GREED HISTORY</div>
+      <div class="card-title">📈 공포 탐욕 지수 추이</div>
+      <div class="card-desc">극단적 공포(0~25) · 공포(25~45) · 중립(45~55) · 탐욕(55~75) · 극단적 탐욕(75~100)</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="fngChart"></canvas></div>
+      <div class="share-bar" style="margin-top:14px;border-top:1px solid var(--hv-border);border-radius:0">
+        <div class="share-bar-preview"><span>공포 탐욕 지수</span> — herdvibe.com</div>
+        <div class="share-bar-buttons">
+          <button class="share-btn share-btn--x" onclick="doShare('twitter')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="label-text">트위터</span></button>
+          <button class="share-btn share-btn--kakao" onclick="doShare('kakao')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg><span class="label-text">카카오톡</span></button>
+          <button class="share-btn share-btn--tg" onclick="doShare('telegram')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span class="label-text">텔레그램</span></button>
+          <button class="share-btn share-btn--ig" onclick="doShare('instagram',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span class="label-text">인스타</span></button>
+          <button class="share-btn share-btn--copy" onclick="doShare('link',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="label-text">링크 복사</span></button>
+        </div>
+      </div>
+    </div>
 
-        function getFngStatus(value) {
-            if (value <= 25) return { text: '극단적 공포', class: 'fear' };
-            if (value <= 45) return { text: '공포', class: 'fear' };
-            if (value <= 55) return { text: '중립', class: 'neutral' };
-            if (value <= 75) return { text: '탐욕', class: 'greed' };
-            return { text: '극단적 탐욕', class: 'greed' };
-        }
+  </div>
 
-        function updateStats() {
-            const latestPrice = chartData.btc_prices[chartData.btc_prices.length - 1];
-            document.getElementById('btc-price').textContent = formatPrice(latestPrice);
+  <div style="background:var(--hv-bg-card);border:1px solid var(--hv-border);border-radius:var(--hv-radius-lg);margin-top:var(--hv-space-lg);overflow:hidden">
+    <div class="share-bar" style="border-top:none">
+      <div class="share-bar-preview"><span>비트코인 공포 탐욕 지수</span> — herdvibe.com</div>
+      <div class="share-bar-buttons">
+        <button class="share-btn share-btn--x" onclick="doShare('twitter')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="label-text">트위터</span></button>
+        <button class="share-btn share-btn--kakao" onclick="doShare('kakao')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.724 1.8 5.112 4.508 6.458l-1.148 4.265a.5.5 0 0 0 .764.533l4.94-3.26c.304.02.612.03.936.03 5.523 0 10-3.462 10-7.735C22 6.463 17.523 3 12 3z"/></svg><span class="label-text">카카오톡</span></button>
+        <button class="share-btn share-btn--tg" onclick="doShare('telegram')"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span class="label-text">텔레그램</span></button>
+        <button class="share-btn share-btn--ig" onclick="doShare('instagram',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg><span class="label-text">인스타</span></button>
+        <button class="share-btn share-btn--copy" onclick="doShare('link',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="label-text">링크 복사</span></button>
+      </div>
+    </div>
+  </div>
+</div>
 
-            const fngData = chartData.fng_index;
-            if (fngData && fngData.length > 0) {
-                let latestValue = null;
-                for (let i = fngData.length - 1; i >= 0; i--) {
-                    if (fngData[i] !== null) { latestValue = fngData[i]; break; }
-                }
-                if (latestValue !== null) {
-                    const status = getFngStatus(latestValue);
-                    document.getElementById('fng-value').textContent = latestValue.toFixed(0);
-                    document.getElementById('fng-value').className = 'stat-value ' + status.class;
-                    document.getElementById('fng-status').textContent = status.text;
-                }
-            }
-        }
+<script>
+/* SHARE */
+var SHARE_URL='https://herdvibe.com/bitcoin-feargreed';
+function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized())Kakao.init('a43ed7b39fac35458f4f9df925a279b5');return typeof Kakao!=='undefined'&&Kakao.isInitialized();}catch(e){return false;}}
+ensureKakao();
+function copyToClipboard(t){try{window.parent.postMessage({type:'clipboard',text:t},'*');}catch(e){}try{navigator.clipboard.writeText(t);}catch(e){}}
+function flashCopied(btn){if(!btn)return;var o=btn.innerHTML;btn.style.background='#22c55e';btn.style.color='#fff';btn.style.borderColor='#22c55e';var hl=btn.querySelector('.label-text');btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>'+(hl?'<span class="label-text" style="color:#fff">복사됨!</span>':'');setTimeout(function(){btn.style.background='';btn.style.color='';btn.style.borderColor='';btn.innerHTML=o;},2000);}
+function doShare(p,btn){var u=SHARE_URL,t=encodeURIComponent('비트코인 공포 탐욕 지수 | herdvibe.com'),eu=encodeURIComponent(u);switch(p){case'twitter':window.open('https://twitter.com/intent/tweet?text='+t+'&url='+eu,'_blank');break;case'telegram':window.open('https://t.me/share/url?url='+eu+'&text='+t,'_blank');break;case'kakao':if(!ensureKakao()){copyToClipboard(u);toast('링크 복사완료!');}else try{Kakao.Share.sendDefault({objectType:'feed',content:{title:'비트코인 공포 탐욕 지수',description:'Bitcoin Fear & Greed Index 실시간 대시보드',imageUrl:'https://raw.githubusercontent.com/kittycapital/kittycapital.github.io/main/assets/herdvibe-og.png',link:{mobileWebUrl:u,webUrl:u}},buttons:[{title:'대시보드 보기',link:{mobileWebUrl:u,webUrl:u}}]});}catch(e){copyToClipboard(u);toast('링크 복사완료!');}break;case'instagram':copyToClipboard(u);flashCopied(btn);toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');break;case'link':copyToClipboard(u);flashCopied(btn);toast('링크가 복사되었습니다 ✓');break;}}
+function toast(m){var c=document.querySelector('.toast-wrap');if(!c){c=document.createElement('div');c.className='toast-wrap';document.body.appendChild(c);}var t=document.createElement('div');t.className='toast';t.textContent=m;c.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transform='translateY(12px)';t.style.transition='.3s';setTimeout(function(){t.remove();},300);},3000);}
 
-        function createBtcChart() {
-            new Chart(document.getElementById('btcChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: chartData.dates,
-                    datasets: [{
-                        label: 'Bitcoin Price',
-                        data: chartData.btc_prices,
-                        borderColor: '#71717a',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 4, pointHoverBackgroundColor: '#71717a'
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#18181b', borderColor: '#27272a', borderWidth: 1,
-                            titleColor: '#e4e4e7', bodyColor: '#a1a1aa', padding: 12, displayColors: false,
-                            callbacks: {
-                                title: function(ctx) {
-                                    const date = getDateFromString(chartData.dates[ctx[0].dataIndex]);
-                                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                },
-                                label: function(ctx) { return 'BTC: ' + formatPrice(ctx.raw); }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { type: 'time', time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } }, grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 }, maxTicksLimit: 8 } },
-                        y: { type: 'linear', position: 'left', grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 }, callback: v => '$' + (v / 1000).toFixed(0) + 'k' } }
-                    }
-                }
-            });
-        }
+/* WATERMARK */
+var watermarkPlugin={id:'herdvibeWatermark',beforeDraw:function(ch){var ctx=ch.ctx,ca=ch.chartArea;if(!ca)return;ctx.save();ctx.font='700 28px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='rgba(255,255,255,0.03)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Herdvibe.com',(ca.left+ca.right)/2,(ca.top+ca.bottom)/2);ctx.restore();}};
+Chart.register(watermarkPlugin);
+Chart.defaults.font.family="'JetBrains Mono','Noto Sans KR',monospace";
+Chart.defaults.font.size=10;Chart.defaults.color='#3a3a52';
+Chart.defaults.elements.point.radius=0;Chart.defaults.elements.point.hoverRadius=4;
+Chart.defaults.elements.line.borderWidth=2;Chart.defaults.animation.duration=600;
+Chart.defaults.responsive=true;Chart.defaults.maintainAspectRatio=false;
+var gridColor='rgba(255,255,255,0.04)';
 
-        function createFngChart() {
-            new Chart(document.getElementById('fngChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: chartData.dates,
-                    datasets: [{
-                        label: 'Fear & Greed Index',
-                        data: chartData.fng_index,
-                        borderColor: '#ffffff',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2, tension: 0.4, pointRadius: 0, pointHoverRadius: 4, pointBackgroundColor: '#ffffff', pointHoverBackgroundColor: '#ffffff', spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#18181b', borderColor: '#27272a', borderWidth: 1,
-                            titleColor: '#e4e4e7', bodyColor: '#a1a1aa', padding: 12, displayColors: false,
-                            callbacks: {
-                                title: function(ctx) {
-                                    const date = getDateFromString(chartData.dates[ctx[0].dataIndex]);
-                                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                },
-                                label: function(ctx) {
-                                    if (ctx.raw === null) return 'No data';
-                                    const status = getFngStatus(ctx.raw);
-                                    return 'Fear & Greed: ' + ctx.raw.toFixed(0) + ' (' + status.text + ')';
-                                }
-                            }
-                        },
-                        annotation: {
-                            annotations: {
-                                redZone: { type: 'box', yMin: 75, yMax: 100, backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 0 },
-                                greenZone: { type: 'box', yMin: 0, yMax: 25, backgroundColor: 'rgba(34, 197, 94, 0.15)', borderWidth: 0 },
-                                redLine: { type: 'line', yMin: 75, yMax: 75, borderColor: 'rgba(239, 68, 68, 0.8)', borderWidth: 1, borderDash: [5, 5], label: { display: true, content: '극단적 탐욕', position: 'end', backgroundColor: 'transparent', color: 'rgba(239, 68, 68, 0.9)', font: { family: "'Noto Sans KR', sans-serif", size: 11, weight: '500' } } },
-                                greenLine: { type: 'line', yMin: 25, yMax: 25, borderColor: 'rgba(34, 197, 94, 0.8)', borderWidth: 1, borderDash: [5, 5], label: { display: true, content: '극단적 공포', position: 'end', backgroundColor: 'transparent', color: 'rgba(34, 197, 94, 0.9)', font: { family: "'Noto Sans KR', sans-serif", size: 11, weight: '500' } } }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { type: 'time', time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } }, grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 }, maxTicksLimit: 8 } },
-                        y: { type: 'linear', position: 'right', min: 0, max: 100, grid: { color: '#27272a', drawBorder: false }, ticks: { color: '#52525b', font: { family: "'JetBrains Mono', monospace", size: 11 } } }
-                    }
-                }
-            });
-        }
+/* DATA */
+var chartData=null;
+function formatPrice(p){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(p);}
+function getDateFromString(s){var p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
+function getFngStatus(v){
+  if(v<=25)return{text:'극단적 공포',cls:'extreme-fear',color:'#ef4444'};
+  if(v<=45)return{text:'공포',cls:'fear',color:'#f97316'};
+  if(v<=55)return{text:'중립',cls:'neutral',color:'#f59e0b'};
+  if(v<=75)return{text:'탐욕',cls:'greed',color:'#84cc16'};
+  return{text:'극단적 탐욕',cls:'extreme-greed',color:'#22c55e'};
+}
 
-        async function init() {
-            try {
-                const response = await fetch('data.json');
-                if (!response.ok) throw new Error('Data not found');
-                chartData = await response.json();
-            } catch (e) {
-                document.querySelector('.chart-wrapper').innerHTML = '<div class="loading">Loading chart data...</div>';
-                return;
-            }
+function updateGauge(value){
+  if(value==null)return;
+  var needle=document.getElementById('gaugeNeedle');
+  var angle=-90+(value/100)*180;
+  needle.style.transform='rotate('+angle+'deg)';
+  document.getElementById('gaugeValue').textContent=Math.round(value);
+  var s=getFngStatus(value);
+  var label=document.getElementById('gaugeLabel');
+  label.textContent=s.text;label.className='gauge-label '+s.cls;
+  document.getElementById('gaugeValue').style.color=s.color;
+}
 
-            if (!chartData || !chartData.dates || chartData.dates.length === 0) {
-                document.querySelector('.chart-wrapper').innerHTML = '<div class="loading">Loading chart data...</div>';
-                return;
-            }
+function updateStats(){
+  if(!chartData)return;
+  var prices=chartData.btc_prices,fng=chartData.fng_index;
+  document.getElementById('btcPrice').textContent=formatPrice(prices[prices.length-1]);
+  var todayVal=null,yesterdayVal=null;
+  for(var i=fng.length-1;i>=0;i--){if(fng[i]!==null){if(todayVal===null)todayVal=fng[i];else if(yesterdayVal===null){yesterdayVal=fng[i];break;}}}
+  if(todayVal!==null){var ts=getFngStatus(todayVal);document.getElementById('fngToday').textContent=Math.round(todayVal);document.getElementById('fngToday').style.color=ts.color;document.getElementById('fngTodayStatus').textContent=ts.text;updateGauge(todayVal);}
+  if(yesterdayVal!==null){var ys=getFngStatus(yesterdayVal);document.getElementById('fngYesterday').textContent=Math.round(yesterdayVal);document.getElementById('fngYesterday').style.color=ys.color;document.getElementById('fngYesterdayStatus').textContent=ys.text;}
+  if(todayVal!==null&&yesterdayVal!==null){var diff=todayVal-yesterdayVal;var el=document.getElementById('fngChange');el.textContent=(diff>0?'+':'')+Math.round(diff);el.className='rate-val '+(diff>0?'pos':diff<0?'neg':'');}
+  var weekVals=fng.slice(-7).filter(function(v){return v!==null;});
+  if(weekVals.length>0){var avg=weekVals.reduce(function(a,b){return a+b;},0)/weekVals.length;document.getElementById('fngWeek').textContent=Math.round(avg);var ws=getFngStatus(avg);document.getElementById('fngWeek').style.color=ws.color;document.getElementById('fngWeekStatus').textContent=ws.text;}
+  var month=fng.slice(-30).filter(function(v){return v!==null;});
+  if(month.length>0){document.getElementById('fng30Low').textContent=Math.round(Math.min.apply(null,month));document.getElementById('fng30High').textContent=Math.round(Math.max.apply(null,month));}
+  document.getElementById('dataStatus').textContent='✓ '+chartData.dates.length+'일';
+}
 
-            if (chartData.last_updated) {
-                document.getElementById('last-updated').textContent = 'Last updated: ' + new Date(chartData.last_updated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            }
+function createBtcChart(){
+  new Chart(document.getElementById('btcChart'),{type:'line',data:{labels:chartData.dates,datasets:[{label:'Bitcoin Price',data:chartData.btc_prices,borderColor:'#71717a',backgroundColor:'rgba(113,113,122,0.05)',fill:true,borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#71717a'}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){return'BTC: '+formatPrice(c.raw);}}}},scales:{x:{type:'time',time:{unit:'month',displayFormats:{month:'MMM yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return'$'+(v/1000).toFixed(0)+'k';}}}}}});
+}
 
-            updateStats();
-            createBtcChart();
-            createFngChart();
-        }
+function createFngChart(){
+  new Chart(document.getElementById('fngChart'),{type:'line',data:{labels:chartData.dates,datasets:[{label:'Fear & Greed',data:chartData.fng_index,borderColor:'#fff',backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointBackgroundColor:'#fff',pointHoverBackgroundColor:'#fff',spanGaps:true,segment:{borderColor:function(ctx){var v=ctx.p1.parsed.y;if(v<=25)return'#ef4444';if(v<=45)return'#f97316';if(v<=55)return'#f59e0b';if(v<=75)return'#84cc16';return'#22c55e';}}}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){if(c.raw===null)return'No data';var s=getFngStatus(c.raw);return'Fear & Greed: '+Math.round(c.raw)+' ('+s.text+')';}}},annotation:{annotations:{redZone:{type:'box',yMin:0,yMax:25,backgroundColor:'rgba(239,68,68,0.08)',borderWidth:0},greenZone:{type:'box',yMin:75,yMax:100,backgroundColor:'rgba(34,197,94,0.08)',borderWidth:0},redLine:{type:'line',yMin:25,yMax:25,borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 공포',position:'start',backgroundColor:'transparent',color:'rgba(239,68,68,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},greenLine:{type:'line',yMin:75,yMax:75,borderColor:'rgba(34,197,94,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 탐욕',position:'start',backgroundColor:'transparent',color:'rgba(34,197,94,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},midLine:{type:'line',yMin:50,yMax:50,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[3,3]}}}},scales:{x:{type:'time',time:{unit:'month',displayFormats:{month:'MMM yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{min:0,max:100,grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10}}}}}});
+}
 
-        init();
-    </script>
+async function init(){
+  try{var r=await fetch('data.json');if(!r.ok)throw new Error('fail');chartData=await r.json();}catch(e){document.querySelector('.chart-wrap').innerHTML='<div class="loading"><div class="spinner"></div>데이터 로딩 중...</div>';return;}
+  if(!chartData||!chartData.dates||!chartData.dates.length)return;
+  if(chartData.last_updated){var d=new Date(chartData.last_updated);var ts=d.toLocaleDateString('ko-KR',{year:'numeric',month:'numeric',day:'numeric'})+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});document.getElementById('lastTime').textContent=ts;document.getElementById('gaugeUpdated').textContent='마지막 업데이트: '+ts;}
+  updateStats();createBtcChart();createFngChart();sendHeight();
+}
+
+/* IFRAME RESIZE */
+var _lastH=0,_ht,_frameId='hvFearGreed';
+function sendHeight(){clearTimeout(_ht);_ht=setTimeout(function(){var el=document.querySelector('.hv-page');var h=(el?el.offsetTop+el.offsetHeight+20:document.body.scrollHeight);if(Math.abs(h-_lastH)>5){_lastH=h;window.parent.postMessage({type:'resize',height:h,id:_frameId},'*');window.parent.postMessage({height:h,id:_frameId},'*');}},150);}
+window.addEventListener('resize',sendHeight);
+window.addEventListener('load',function(){sendHeight();setTimeout(sendHeight,500);setTimeout(sendHeight,1500);setTimeout(sendHeight,3000);});
+new MutationObserver(sendHeight).observe(document.body,{childList:true,subtree:true});
+setInterval(sendHeight,2000);
+init();
+</script>
 </body>
 </html>
