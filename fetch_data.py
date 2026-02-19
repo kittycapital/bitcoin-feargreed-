@@ -221,9 +221,14 @@ def fetch_ibit_put_call_ratio():
 
 
 def align_data(btc_prices, fng_index, vix_index):
-    """Align all data to common dates"""
+    """Align all data to union of all dates (not just BTC)"""
 
-    all_dates = sorted(btc_prices.keys())
+    # Union of ALL dates from all sources
+    all_dates_set = set()
+    all_dates_set.update(btc_prices.keys())
+    all_dates_set.update(fng_index.keys())
+    all_dates_set.update(vix_index.keys())
+    all_dates = sorted(all_dates_set)
 
     final_dates = []
     final_prices = []
@@ -232,14 +237,18 @@ def align_data(btc_prices, fng_index, vix_index):
 
     for date in all_dates:
         final_dates.append(date)
-        final_prices.append(btc_prices[date])
 
+        # BTC price - direct or None (frontend fills from btc_history.json)
+        final_prices.append(btc_prices.get(date, None))
+
+        # Fear & Greed - direct or nearest within 3 days
         if date in fng_index:
             final_fng.append(fng_index[date])
         else:
             nearest = find_nearest_value(date, fng_index, 3)
             final_fng.append(nearest)
 
+        # VIX/DVOL - direct or nearest within 3 days
         if date in vix_index:
             final_vix.append(vix_index[date])
         else:
@@ -347,7 +356,9 @@ def main():
 
     print(f"\n[SAVE] Saved to {DATA_FILE}")
     print(f"   Date range: {dates[0]} to {dates[-1]}")
-    print(f"   Latest BTC: ${prices[-1]:,.0f}")
+    # Find latest non-null price
+    latest_price = next((p for p in reversed(prices) if p is not None), 0)
+    print(f"   Latest BTC: ${latest_price:,.0f}")
 
     latest_fng = fng[-1] if fng[-1] is not None else 'N/A'
     latest_vix = vix[-1] if vix[-1] is not None else 'N/A'
