@@ -90,6 +90,12 @@ body::-webkit-scrollbar{display:none}
 .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px}
 .toast{background:var(--hv-bg-elevated);border:1px solid var(--hv-border-strong);border-radius:var(--hv-radius-md);padding:10px 18px;font-size:.788rem;color:var(--hv-text-primary);box-shadow:var(--hv-shadow-lg);animation:toastIn .3s ease;border-left:3px solid var(--hv-up)}
 @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap;justify-content:center}
+.tab{padding:5px 14px;border-radius:6px;font-family:var(--hv-font-mono);font-size:11px;font-weight:500;color:var(--hv-text-muted);background:transparent;border:1px solid transparent;cursor:pointer;transition:all .2s;user-select:none}
+.tab:hover{color:var(--hv-text-secondary);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--cyan);background:rgba(0,229,204,.08);border-color:rgba(0,229,204,.2)}
+
 .loading{display:flex;align-items:center;justify-content:center;height:120px;color:var(--hv-text-tertiary);font-size:13px}
 .spinner{width:16px;height:16px;border:2px solid var(--hv-border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-right:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -137,7 +143,7 @@ body::-webkit-scrollbar{display:none}
     <!-- GAUGE -->
     <div class="card s5" style="animation-delay:.05s">
       <div class="card-label">CURRENT INDEX</div>
-      <div class="card-title">🎯 현재 공포 탐욕 지수</div>
+      <div class="card-title">현재 공포 탐욕 지수</div>
       <div class="gauge-container">
         <div class="gauge-svg-wrap">
           <svg viewBox="0 0 200 115">
@@ -180,7 +186,7 @@ body::-webkit-scrollbar{display:none}
     <!-- OVERVIEW -->
     <div class="card s7" style="animation-delay:.1s">
       <div class="card-label">OVERVIEW</div>
-      <div class="card-title">📊 지수 요약</div>
+      <div class="card-title">지수 요약</div>
       <div class="card-desc">Bitcoin Price & Fear/Greed Summary</div>
       <div class="fng-stats">
         <div class="fng-stat"><div class="fng-stat-label">Bitcoin</div><div class="fng-stat-val live-price" id="btcPrice">—<span class="live-flash"></span></div><div class="fng-stat-sub">실시간 가격</div></div>
@@ -201,10 +207,20 @@ body::-webkit-scrollbar{display:none}
       </div>
     </div>
 
+    <!-- PERIOD TABS -->
+    <div class="card s12" style="animation-delay:.12s;padding:12px 20px">
+      <div class="tabs" id="periodTabs" style="margin-bottom:0">
+        <div class="tab active" data-period="365">1Y</div>
+        <div class="tab" data-period="1095">3Y</div>
+        <div class="tab" data-period="1825">5Y</div>
+        <div class="tab" data-period="0">ALL</div>
+      </div>
+    </div>
+
     <!-- BTC CHART -->
     <div class="card s12" style="animation-delay:.15s">
       <div class="card-label">BITCOIN PRICE</div>
-      <div class="card-title">💰 비트코인 가격</div>
+      <div class="card-title">비트코인 가격</div>
       <div class="card-desc">Bitcoin Price (USD)</div>
       <div class="chart-wrap" style="height:280px"><canvas id="btcChart"></canvas></div>
       <div class="share-bar" style="margin-top:14px;border-top:1px solid var(--hv-border);border-radius:0">
@@ -216,7 +232,7 @@ body::-webkit-scrollbar{display:none}
     <!-- FNG CHART -->
     <div class="card s12" style="animation-delay:.2s">
       <div class="card-label">FEAR & GREED HISTORY</div>
-      <div class="card-title">📈 공포 탐욕 지수 추이</div>
+      <div class="card-title">공포 탐욕 지수 추이</div>
       <div class="card-desc">극단적 공포(0~25) · 공포(25~45) · 중립(45~55) · 탐욕(55~75) · 극단적 탐욕(75~100)</div>
       <div class="chart-wrap" style="height:220px"><canvas id="fngChart"></canvas></div>
       <div class="share-bar" style="margin-top:14px;border-top:1px solid var(--hv-border);border-radius:0">
@@ -253,7 +269,7 @@ function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized()
 ensureKakao();
 function copyToClipboard(t){try{window.parent.postMessage({type:'clipboard',text:t},'*');}catch(e){}try{navigator.clipboard.writeText(t);}catch(e){}}
 function flashCopied(btn){if(!btn)return;var o=btn.innerHTML;btn.style.background='#22c55e';btn.style.color='#fff';btn.style.borderColor='#22c55e';btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg><span class="label-text" style="color:#fff">복사됨!</span>';setTimeout(function(){btn.style.background='';btn.style.color='';btn.style.borderColor='';btn.innerHTML=o;},2000);}
-function doShare(p,btn){var u=SHARE_URL,t=encodeURIComponent('비트코인 공포 탐욕 지수 | herdvibe.com'),eu=encodeURIComponent(u);switch(p){case'twitter':window.open('https://twitter.com/intent/tweet?text='+t+'&url='+eu,'_blank');break;case'telegram':window.open('https://t.me/share/url?url='+eu+'&text='+t,'_blank');break;case'kakao':if(!ensureKakao()){copyToClipboard(u);toast('링크 복사완료!');}else try{Kakao.Share.sendDefault({objectType:'feed',content:{title:'비트코인 공포 탐욕 지수',description:'Bitcoin Fear & Greed Index 실시간 대시보드',imageUrl:'https://raw.githubusercontent.com/kittycapital/kittycapital.github.io/main/assets/herdvibe-og.png',link:{mobileWebUrl:u,webUrl:u}},buttons:[{title:'대시보드 보기',link:{mobileWebUrl:u,webUrl:u}}]});}catch(e){copyToClipboard(u);toast('링크 복사완료!');}break;case'instagram':copyToClipboard(u);flashCopied(btn);toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');break;case'link':copyToClipboard(u);flashCopied(btn);toast('링크가 복사되었습니다 ✓');break;}}
+function doShare(p,btn){var u=SHARE_URL,t=encodeURIComponent('비트코인 공포 탐욕 지수 | herdvibe.com'),eu=encodeURIComponent(u);switch(p){case'twitter':window.open('https://twitter.com/intent/tweet?text='+t+'&url='+eu,'_blank');break;case'telegram':window.open('https://t.me/share/url?url='+eu+'&text='+t,'_blank');break;case'kakao':if(!ensureKakao()){copyToClipboard(u);toast('링크 복사완료!');}else try{Kakao.Share.sendDefault({objectType:'feed',content:{title:'비트코인 공포 탐욕 지수',description:'Bitcoin Fear & Greed Index 실시간 대시보드',imageUrl:'https://raw.githubusercontent.com/kittycapital/kittycapital.github.io/main/assets/herdvibe-og.png',link:{mobileWebUrl:u,webUrl:u}},buttons:[{title:'대시보드 보기',link:{mobileWebUrl:u,webUrl:u}}]});}catch(e){copyToClipboard(u);toast('링크 복사완료!');}break;case'instagram':copyToClipboard(u);flashCopied(btn);toast('링크 복사완료! 인스타그램에 붙여넣기 하세요');break;case'link':copyToClipboard(u);flashCopied(btn);toast('링크가 복사되었습니다');break;}}
 function toast(m){var c=document.querySelector('.toast-wrap');if(!c){c=document.createElement('div');c.className='toast-wrap';document.body.appendChild(c);}var t=document.createElement('div');t.className='toast';t.textContent=m;c.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transform='translateY(12px)';t.style.transition='.3s';setTimeout(function(){t.remove();},300);},3000);}
 
 /* WATERMARK */
@@ -267,7 +283,8 @@ Chart.defaults.responsive=true;Chart.defaults.maintainAspectRatio=false;
 var gridColor='rgba(255,255,255,0.04)';
 
 /* DATA */
-var chartData=null;
+var fullData=null,chartData=null,btcHistory=null;
+var btcChart=null,fngChart=null,currentPeriod=365;
 function formatPrice(p){return'$'+p.toLocaleString('en-US',{maximumFractionDigits:0});}
 function getDateFromString(s){var p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function getFngStatus(v){
@@ -317,8 +334,8 @@ async function fetchBtcRest(){
 }
 
 function updateStats(){
-  if(!chartData)return;
-  var fng=chartData.fng_index;
+  if(!fullData)return;
+  var fng=fullData.fng_index;
   var todayVal=null,yesterdayVal=null;
   for(var i=fng.length-1;i>=0;i--){if(fng[i]!==null){if(todayVal===null)todayVal=fng[i];else if(yesterdayVal===null){yesterdayVal=fng[i];break;}}}
   if(todayVal!==null){var ts=getFngStatus(todayVal);document.getElementById('fngToday').textContent=Math.round(todayVal);document.getElementById('fngToday').style.color=ts.color;document.getElementById('fngTodayStatus').textContent=ts.text;updateGauge(todayVal);}
@@ -328,25 +345,97 @@ function updateStats(){
   if(weekVals.length>0){var avg=weekVals.reduce(function(a,b){return a+b;},0)/weekVals.length;document.getElementById('fngWeek').textContent=Math.round(avg);var ws2=getFngStatus(avg);document.getElementById('fngWeek').style.color=ws2.color;document.getElementById('fngWeekStatus').textContent=ws2.text;}
   var month=fng.slice(-30).filter(function(v){return v!==null;});
   if(month.length>0){document.getElementById('fng30Low').textContent=Math.round(Math.min.apply(null,month));document.getElementById('fng30High').textContent=Math.round(Math.max.apply(null,month));}
-  document.getElementById('dataStatus').textContent='✓ '+chartData.dates.length+'일';
+  document.getElementById('dataStatus').textContent=fullData.dates.length+'일';
   // set initial BTC price from data
-  var latestPrice=chartData.btc_prices[chartData.btc_prices.length-1];
+  var latestPrice=fullData.btc_prices[fullData.btc_prices.length-1];
   document.getElementById('btcPrice').innerHTML=formatPrice(latestPrice)+'<span class="live-flash"></span>';
 }
 
 function createBtcChart(){
-  new Chart(document.getElementById('btcChart'),{type:'line',data:{labels:chartData.dates,datasets:[{label:'Bitcoin Price',data:chartData.btc_prices,borderColor:'#71717a',backgroundColor:'rgba(113,113,122,0.05)',fill:true,borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#71717a'}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){return'BTC: '+formatPrice(c.raw);}}}},scales:{x:{type:'time',time:{unit:'month',displayFormats:{month:'MMM yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return'$'+(v/1000).toFixed(0)+'k';}}}}}});
+  var ctx=document.getElementById('btcChart');
+  if(!ctx)return;
+  if(btcChart){btcChart.destroy();btcChart=null;}
+  var timeUnit=currentPeriod<=365?'month':currentPeriod<=1825?'quarter':'year';
+  btcChart=new Chart(ctx,{type:'line',data:{labels:chartData.dates,datasets:[{label:'Bitcoin Price',data:chartData.btc_prices,borderColor:'#71717a',backgroundColor:'rgba(113,113,122,0.05)',fill:true,borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#71717a'}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){return'BTC: '+formatPrice(c.raw);}}}},scales:{x:{type:'time',time:{unit:timeUnit,displayFormats:{month:'MMM yyyy',quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v;}}}}}});
 }
 
 function createFngChart(){
-  new Chart(document.getElementById('fngChart'),{type:'line',data:{labels:chartData.dates,datasets:[{label:'Fear & Greed',data:chartData.fng_index,borderColor:'#fff',backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointBackgroundColor:'#fff',pointHoverBackgroundColor:'#fff',spanGaps:true,segment:{borderColor:function(ctx){var v=ctx.p1.parsed.y;if(v<=25)return'#ef4444';if(v<=45)return'#f97316';if(v<=55)return'#f59e0b';if(v<=75)return'#84cc16';return'#22c55e';}}}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){if(c.raw===null)return'No data';var s=getFngStatus(c.raw);return'Fear & Greed: '+Math.round(c.raw)+' ('+s.text+')';}}},annotation:{annotations:{redZone:{type:'box',yMin:0,yMax:25,backgroundColor:'rgba(239,68,68,0.08)',borderWidth:0},greenZone:{type:'box',yMin:75,yMax:100,backgroundColor:'rgba(34,197,94,0.08)',borderWidth:0},redLine:{type:'line',yMin:25,yMax:25,borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 공포',position:'start',backgroundColor:'transparent',color:'rgba(239,68,68,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},greenLine:{type:'line',yMin:75,yMax:75,borderColor:'rgba(34,197,94,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 탐욕',position:'start',backgroundColor:'transparent',color:'rgba(34,197,94,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},midLine:{type:'line',yMin:50,yMax:50,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[3,3]}}}},scales:{x:{type:'time',time:{unit:'month',displayFormats:{month:'MMM yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{min:0,max:100,grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10}}}}}});
+  var ctx=document.getElementById('fngChart');
+  if(!ctx)return;
+  if(fngChart){fngChart.destroy();fngChart=null;}
+  var timeUnit=currentPeriod<=365?'month':currentPeriod<=1825?'quarter':'year';
+  fngChart=new Chart(ctx,{type:'line',data:{labels:chartData.dates,datasets:[{label:'Fear & Greed',data:chartData.fng_index,borderColor:'#fff',backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointBackgroundColor:'#fff',pointHoverBackgroundColor:'#fff',spanGaps:true,segment:{borderColor:function(ctx){var v=ctx.p1.parsed.y;if(v<=25)return'#ef4444';if(v<=45)return'#f97316';if(v<=55)return'#f59e0b';if(v<=75)return'#84cc16';return'#22c55e';}}}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){if(c.raw===null)return'No data';var s=getFngStatus(c.raw);return'Fear & Greed: '+Math.round(c.raw)+' ('+s.text+')';}}},annotation:{annotations:{redZone:{type:'box',yMin:0,yMax:25,backgroundColor:'rgba(239,68,68,0.08)',borderWidth:0},greenZone:{type:'box',yMin:75,yMax:100,backgroundColor:'rgba(34,197,94,0.08)',borderWidth:0},redLine:{type:'line',yMin:25,yMax:25,borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 공포',position:'start',backgroundColor:'transparent',color:'rgba(239,68,68,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},greenLine:{type:'line',yMin:75,yMax:75,borderColor:'rgba(34,197,94,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 탐욕',position:'start',backgroundColor:'transparent',color:'rgba(34,197,94,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},midLine:{type:'line',yMin:50,yMax:50,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[3,3]}}}},scales:{x:{type:'time',time:{unit:timeUnit,displayFormats:{month:'MMM yyyy',quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{min:0,max:100,grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10}}}}}});
 }
 
+/* PERIOD FILTERING */
+function mergeHistoricalData(){
+  if(!fullData)return;
+  // Build a map of all dates from data.json
+  var dateMap={};
+  for(var i=0;i<fullData.dates.length;i++){
+    dateMap[fullData.dates[i]]={price:fullData.btc_prices[i],fng:fullData.fng_index[i]};
+  }
+  // Add historical BTC prices from CSV (only if not already in data.json)
+  if(btcHistory){
+    var histDates=Object.keys(btcHistory).sort();
+    for(var j=0;j<histDates.length;j++){
+      var d=histDates[j];
+      if(!dateMap[d]){dateMap[d]={price:btcHistory[d],fng:null};}
+      else if(!dateMap[d].price){dateMap[d].price=btcHistory[d];}
+    }
+  }
+  // Build sorted arrays
+  var allDates=Object.keys(dateMap).sort();
+  fullData._allDates=allDates;
+  fullData._allPrices=allDates.map(function(d){return dateMap[d].price;});
+  fullData._allFng=allDates.map(function(d){return dateMap[d].fng;});
+}
+
+function setChartPeriod(days){
+  currentPeriod=days;
+  if(!fullData||!fullData._allDates)return;
+  var allDates=fullData._allDates;
+  var allPrices=fullData._allPrices;
+  var allFng=fullData._allFng;
+  if(days===0){
+    // ALL
+    chartData={dates:allDates.slice(),btc_prices:allPrices.slice(),fng_index:allFng.slice()};
+  }else{
+    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);
+    var cutStr=cutoff.toISOString().slice(0,10);
+    var startIdx=0;
+    for(var i=0;i<allDates.length;i++){if(allDates[i]>=cutStr){startIdx=i;break;}}
+    chartData={dates:allDates.slice(startIdx),btc_prices:allPrices.slice(startIdx),fng_index:allFng.slice(startIdx)};
+  }
+  // Preserve other fields for stats
+  chartData.fng_index_full=fullData.fng_index;
+  chartData.last_updated=fullData.last_updated;
+  createBtcChart();createFngChart();sendHeight();
+}
+
+/* TABS */
+document.querySelectorAll('#periodTabs .tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('#periodTabs .tab').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    var period=parseInt(t.dataset.period);
+    setChartPeriod(period);
+  });
+});
+
 async function init(){
-  try{var r=await fetch('data.json');if(!r.ok)throw new Error('fail');chartData=await r.json();}catch(e){return;}
-  if(!chartData||!chartData.dates||!chartData.dates.length)return;
-  if(chartData.last_updated){var d=new Date(chartData.last_updated);var ts=d.toLocaleDateString('ko-KR',{year:'numeric',month:'numeric',day:'numeric'})+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});document.getElementById('lastTime').textContent=ts;document.getElementById('gaugeUpdated').textContent='마지막 업데이트: '+ts;}
-  updateStats();createBtcChart();createFngChart();
+  // Load data.json
+  try{var r=await fetch('data.json');if(!r.ok)throw new Error('fail');fullData=await r.json();}catch(e){return;}
+  if(!fullData||!fullData.dates||!fullData.dates.length)return;
+  // Load historical BTC prices
+  try{var r2=await fetch('btc_history.json');if(r2.ok)btcHistory=await r2.json();}catch(e){}
+  // Merge
+  mergeHistoricalData();
+  // Set initial period (1Y)
+  chartData={dates:fullData.dates,btc_prices:fullData.btc_prices,fng_index:fullData.fng_index,last_updated:fullData.last_updated};
+  if(fullData.last_updated){var d=new Date(fullData.last_updated);var ts=d.toLocaleDateString('ko-KR',{year:'numeric',month:'numeric',day:'numeric'})+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});document.getElementById('lastTime').textContent=ts;document.getElementById('gaugeUpdated').textContent='마지막 업데이트: '+ts;}
+  updateStats();
+  setChartPeriod(365);
   connectBinance();
   sendHeight();
 }
