@@ -346,9 +346,10 @@ function updateStats(){
   var month=fng.slice(-30).filter(function(v){return v!==null;});
   if(month.length>0){document.getElementById('fng30Low').textContent=Math.round(Math.min.apply(null,month));document.getElementById('fng30High').textContent=Math.round(Math.max.apply(null,month));}
   document.getElementById('dataStatus').textContent=fullData.dates.length+'일';
-  // set initial BTC price from data
-  var latestPrice=fullData.btc_prices[fullData.btc_prices.length-1];
-  document.getElementById('btcPrice').innerHTML=formatPrice(latestPrice)+'<span class="live-flash"></span>';
+  // set initial BTC price from data (find latest non-null)
+  var latestPrice=null;
+  for(var pi=fullData.btc_prices.length-1;pi>=0;pi--){if(fullData.btc_prices[pi]!=null){latestPrice=fullData.btc_prices[pi];break;}}
+  if(latestPrice)document.getElementById('btcPrice').innerHTML=formatPrice(latestPrice)+'<span class="live-flash"></span>';
 }
 
 function createBtcChart(){
@@ -370,18 +371,18 @@ function createFngChart(){
 /* PERIOD FILTERING */
 function mergeHistoricalData(){
   if(!fullData)return;
-  // Build a map of all dates from data.json
+  // Build a map of all dates from data.json (now includes FNG from 2018+)
   var dateMap={};
   for(var i=0;i<fullData.dates.length;i++){
     dateMap[fullData.dates[i]]={price:fullData.btc_prices[i],fng:fullData.fng_index[i]};
   }
-  // Add historical BTC prices from CSV (only if not already in data.json)
+  // Add historical BTC prices from CSV (only if not already present or null)
   if(btcHistory){
     var histDates=Object.keys(btcHistory).sort();
     for(var j=0;j<histDates.length;j++){
       var d=histDates[j];
       if(!dateMap[d]){dateMap[d]={price:btcHistory[d],fng:null};}
-      else if(!dateMap[d].price){dateMap[d].price=btcHistory[d];}
+      else if(dateMap[d].price==null){dateMap[d].price=btcHistory[d];}
     }
   }
   // Build sorted arrays
