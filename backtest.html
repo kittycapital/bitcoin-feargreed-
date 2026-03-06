@@ -335,20 +335,28 @@ function getFngStatus(v){
 }
 
 /* Build unified date→{price,fng} map */
+var mergedDates=[],mergedPrices=[],mergedFng=[];
 function buildDateMap(){
   dateMap={};
   if(!fullData)return;
   for(var i=0;i<fullData.dates.length;i++){
-    dateMap[fullData.dates[i]]={price:fullData.btc_prices[i],fng:fullData.fng_index[i]};
+    var p=fullData.btc_prices[i];
+    dateMap[fullData.dates[i]]={price:(p!=null&&p>0?p:null),fng:fullData.fng_index[i]};
   }
   if(btcHistory){
     var keys=Object.keys(btcHistory);
     for(var j=0;j<keys.length;j++){
       var d=keys[j];
-      if(!dateMap[d])dateMap[d]={price:btcHistory[d],fng:null};
-      else if(dateMap[d].price==null)dateMap[d].price=btcHistory[d];
+      var hp=btcHistory[d];
+      if(hp==null||hp<=0)continue;
+      if(!dateMap[d])dateMap[d]={price:hp,fng:null};
+      else if(dateMap[d].price==null||dateMap[d].price<=0)dateMap[d].price=hp;
     }
   }
+  // Build sorted merged arrays for charts
+  mergedDates=Object.keys(dateMap).sort();
+  mergedPrices=mergedDates.map(function(d){return dateMap[d].price;});
+  mergedFng=mergedDates.map(function(d){return dateMap[d].fng;});
 }
 
 function getPrice(dateStr){
@@ -370,19 +378,21 @@ function findSignals(threshold,direction,cooldownDays){
   var lastSignalDate=null;
   for(var i=0;i<fullData.dates.length;i++){
     var fng=fullData.fng_index[i];
-    var price=fullData.btc_prices[i];
-    if(fng==null||price==null)continue;
+    if(fng==null)continue;
+    var d=fullData.dates[i];
+    var price=dateMap[d]?dateMap[d].price:fullData.btc_prices[i];
+    if(price==null||price<=0)continue;
     var pass=direction==='buy'?(fng<=threshold):(fng>=threshold);
     if(!pass)continue;
     // cooldown
     if(lastSignalDate){
-      var daysDiff=(getDateFromString(fullData.dates[i])-getDateFromString(lastSignalDate))/(86400000);
+      var daysDiff=(getDateFromString(d)-getDateFromString(lastSignalDate))/(86400000);
       if(daysDiff<cooldownDays)continue;
     }
-    var sig={date:fullData.dates[i],fng:fng,price:price,returns:{}};
+    var sig={date:d,fng:fng,price:price,returns:{}};
     // Calculate future returns
     [30,90,180,365].forEach(function(days){
-      var futureDate=addDays(fullData.dates[i],days);
+      var futureDate=addDays(d,days);
       var futurePrice=getPrice(futureDate);
       if(futurePrice!=null){
         sig.returns[days]=((futurePrice-price)/price)*100;
@@ -391,7 +401,7 @@ function findSignals(threshold,direction,cooldownDays){
       }
     });
     signals.push(sig);
-    lastSignalDate=fullData.dates[i];
+    lastSignalDate=d;
   }
   return signals;
 }
@@ -455,9 +465,9 @@ function buildSignalChart(){
   var buyDates={};buySigs.forEach(function(s){buyDates[s.date]=s;});
   var sellDates={};sellSigs.forEach(function(s){sellDates[s.date]=s;});
 
-  // Use all dates with FNG data
-  var dates=fullData.dates;
-  var prices=fullData.btc_prices;
+  // Use merged dates (includes btc_history.json) for full price history
+  var dates=mergedDates;
+  var prices=mergedPrices;
   var buyPoints=dates.map(function(d,i){return buyDates[d]?prices[i]:null;});
   var sellPoints=dates.map(function(d,i){return sellDates[d]?prices[i]:null;});
 
@@ -494,7 +504,7 @@ function buildSignalChart(){
       },
       scales:{
         x:{type:'time',time:{unit:'quarter',displayFormats:{quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},
-        y:{grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v;}}}
+        y:{type:'logarithmic',grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){if([1000,3000,5000,10000,20000,30000,50000,100000,200000].indexOf(v)>=0)return'$'+(v>=1000?(v/1000).toFixed(0)+'k':v);return'';}}}
       }
     }
   });
@@ -518,8 +528,9 @@ function buildZoneAnalysis(){
       if(fng>=z.range[0]&&fng<(z.range[1]===100?101:z.range[1])){
         days++;
         var futurePrice=getPrice(addDays(fullData.dates[i],30));
-        var curPrice=fullData.btc_prices[i];
-        if(futurePrice!=null&&curPrice!=null){
+        var d=fullData.dates[i];
+        var curPrice=dateMap[d]?dateMap[d].price:fullData.btc_prices[i];
+        if(futurePrice!=null&&curPrice!=null&&curPrice>0){
           returns30.push(((futurePrice-curPrice)/curPrice)*100);
         }
       }
