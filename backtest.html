@@ -9,6 +9,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js" crossorigin="anonymous" async></script>
 <style>
 :root{--hv-primary:#3b82f6;--hv-primary-light:#60a5fa;--hv-primary-dark:#2563eb;--hv-primary-glow:rgba(59,130,246,0.12);--hv-up:#22c55e;--hv-down:#ef4444;--hv-warning:#f59e0b;--hv-bg-base:#000;--hv-bg-surface:#0a0a0a;--hv-bg-card:#111;--hv-bg-card-hover:#181818;--hv-bg-elevated:#1a1a1a;--hv-text-primary:#e5e5e5;--hv-text-secondary:#8a8a8a;--hv-text-tertiary:#555;--hv-text-muted:#3a3a3a;--hv-border:rgba(255,255,255,0.06);--hv-border-strong:rgba(255,255,255,0.12);--hv-font-display:'Plus Jakarta Sans',sans-serif;--hv-font-body:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;--hv-font-mono:'JetBrains Mono','SF Mono',monospace;--hv-space-xs:8px;--hv-space-sm:12px;--hv-space-md:16px;--hv-space-lg:24px;--hv-space-xl:32px;--hv-radius-sm:6px;--hv-radius-md:10px;--hv-radius-lg:14px;--hv-shadow-sm:0 1px 3px rgba(0,0,0,.5);--hv-shadow-lg:0 8px 32px rgba(0,0,0,.7);--hv-transition-fast:150ms ease;--hv-transition:250ms ease;--hv-max-width:1280px;--hv-header-height:60px;--blue:#4a9eff;--cyan:#00e5cc;--red:#ff4a6a;--orange:#ff8c42;--yellow:#ffd642;--green:#42ff8c;--purple:#a855f7}
@@ -227,7 +229,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     <div class="card s12" style="animation-delay:.15s">
       <div class="card-label">SIGNAL CHART</div>
       <div class="card-title">📈 시그널 차트</div>
-      <div class="card-desc">BTC 가격 위에 매수(🟢) / 매도(🔴) 시그널을 표시합니다</div>
+      <div class="card-desc">BTC 가격 위에 매수(🟢) / 매도(🔴) 시그널을 표시합니다 · 마우스 휠로 줌, 드래그로 패닝</div>
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px">
+        <button class="preset-btn" id="zoomResetBtn" onclick="if(signalChart)signalChart.resetZoom()">↻ 리셋</button>
+      </div>
       <div class="chart-wrap"><canvas id="signalChart"></canvas></div>
     </div>
 
@@ -500,6 +505,16 @@ function buildSignalChart(){
               if(c.datasetIndex===2){var s2=sellDates[dates[c.dataIndex]];return s2?'매도 FNG='+Math.round(s2.fng)+' | '+formatPrice(s2.price):'';}
             }
           }
+        },
+        zoom:{
+          pan:{enabled:true,mode:'x',modifierKey:null},
+          zoom:{
+            wheel:{enabled:true,speed:0.05},
+            pinch:{enabled:true},
+            drag:{enabled:false},
+            mode:'x'
+          },
+          limits:{x:{minRange:30*86400000}}
         }
       },
       scales:{
