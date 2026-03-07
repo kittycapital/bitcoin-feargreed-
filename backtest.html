@@ -40,13 +40,13 @@ body::-webkit-scrollbar{display:none}
 /* CONTROLS */
 .ctrl-row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:6px}
 .ctrl-group{display:flex;flex-direction:column;gap:4px;min-width:140px}
-.ctrl-label{font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-tertiary);text-transform:uppercase;letter-spacing:1px}
+.ctrl-label{font-family:var(--hv-font-mono);font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px}
 .ctrl-val{font-family:var(--hv-font-mono);font-size:13px;font-weight:600;color:var(--cyan)}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);outline:none;cursor:pointer}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,0.12);outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--cyan);border:2px solid #111;cursor:pointer;box-shadow:0 0 8px rgba(0,229,204,0.4)}
 input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--cyan);border:2px solid #111;cursor:pointer}
 .ctrl-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:8px}
-.preset-btn{padding:4px 12px;border-radius:5px;font-family:var(--hv-font-mono);font-size:10px;font-weight:500;color:var(--hv-text-tertiary);background:rgba(255,255,255,0.03);border:1px solid var(--hv-border);cursor:pointer;transition:all .2s}
+.preset-btn{padding:4px 12px;border-radius:5px;font-family:var(--hv-font-mono);font-size:10px;font-weight:500;color:#999;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .2s}
 .preset-btn:hover,.preset-btn.active{color:var(--cyan);background:rgba(0,229,204,.08);border-color:rgba(0,229,204,.2)}
 
 /* HEATMAP */
@@ -201,7 +201,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         </div>
       </div>
       <div class="ctrl-presets">
-        <span style="font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-tertiary);margin-right:4px">프리셋:</span>
+        <span style="font-family:var(--hv-font-mono);font-size:10px;color:#999;margin-right:4px">프리셋:</span>
         <button class="preset-btn" data-buy="10" data-sell="90">극단적 (10/90)</button>
         <button class="preset-btn active" data-buy="25" data-sell="75">기본 (25/75)</button>
         <button class="preset-btn" data-buy="20" data-sell="80">보수적 (20/80)</button>
@@ -221,7 +221,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
           </div>
         </div>
         <div class="ctrl-presets" id="cyclePresets">
-          <span style="font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-tertiary);margin-right:4px">사이클:</span>
+          <span style="font-family:var(--hv-font-mono);font-size:10px;color:#999;margin-right:4px">사이클:</span>
           <button class="preset-btn cycle-btn active" data-start="2018" data-end="2026">전체</button>
           <button class="preset-btn cycle-btn" data-start="2018" data-end="2020">2018-2020 약세</button>
           <button class="preset-btn cycle-btn" data-start="2020" data-end="2021">2020-2021 불장</button>
