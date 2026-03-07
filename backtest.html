@@ -689,92 +689,91 @@ function buildAvgFootHtml(avgData,label){
   return html;
 }
 
-/* Whisker plugin — draws min/max lines on bars */
-var whiskerPlugin={
-  id:'whiskerPlugin',
+/* Value label plugin — show value on top/bottom of each bar */
+var barLabelPlugin={
+  id:'barLabelPlugin',
   afterDatasetsDraw:function(chart){
-    var meta=chart.getDatasetMeta(0);
-    if(!meta||!meta.data||!chart._whiskerData)return;
     var ctx=chart.ctx;
-    var wd=chart._whiskerData;
     ctx.save();
-    meta.data.forEach(function(bar,i){
-      if(!wd.min[i]&&wd.min[i]!==0)return;
-      var yScale=chart.scales.y;
-      var yMin=yScale.getPixelForValue(wd.min[i]);
-      var yMax=yScale.getPixelForValue(wd.max[i]);
-      var xCenter=bar.x;
-      var halfW=bar.width?bar.width/2:12;
-      var whiskerW=halfW*0.6;
-      ctx.strokeStyle=wd.color||'rgba(255,255,255,0.5)';
-      ctx.lineWidth=1.5;
-      ctx.setLineDash([]);
-      // vertical line
-      ctx.beginPath();ctx.moveTo(xCenter,yMin);ctx.lineTo(xCenter,yMax);ctx.stroke();
-      // top cap
-      ctx.beginPath();ctx.moveTo(xCenter-whiskerW,yMax);ctx.lineTo(xCenter+whiskerW,yMax);ctx.stroke();
-      // bottom cap
-      ctx.beginPath();ctx.moveTo(xCenter-whiskerW,yMin);ctx.lineTo(xCenter+whiskerW,yMin);ctx.stroke();
-      // labels
-      ctx.font='600 9px "JetBrains Mono",monospace';
-      ctx.textAlign='center';
-      ctx.fillStyle=wd.max[i]>=0?'#22c55e':'#ef4444';
-      ctx.fillText(formatPct(wd.max[i]),xCenter,yMax-6);
-      ctx.fillStyle=wd.min[i]>=0?'#22c55e':'#ef4444';
-      ctx.fillText(formatPct(wd.min[i]),xCenter,yMin+14);
+    chart.data.datasets.forEach(function(ds,dsIdx){
+      var meta=chart.getDatasetMeta(dsIdx);
+      meta.data.forEach(function(bar,i){
+        var val=ds.data[i];
+        if(val==null)return;
+        ctx.font='600 10px "JetBrains Mono",monospace';
+        ctx.textAlign='center';
+        ctx.fillStyle=val>=0?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.7)';
+        var yPos=val>=0?bar.y-8:bar.y+14;
+        ctx.fillText(formatPct(val),bar.x,yPos);
+      });
     });
     ctx.restore();
   }
 };
 
-function buildSingleJourneyChart(canvasId,chartRef,stats,barColor,borderColor,whiskerColor,label){
+function buildSingleJourneyChart(canvasId,chartRef,stats,colors){
   var ctx=document.getElementById(canvasId);
   if(chartRef){chartRef.destroy();}
 
   var labels=['30일 후','90일 후','180일 후','1년 후'];
   var periods=[30,90,180,365];
+  var maxData=periods.map(function(p){return stats.max[p]!=null?stats.max[p]:0;});
   var avgData=periods.map(function(p){return stats.avg[p]!=null?stats.avg[p]:0;});
-  var minData=periods.map(function(p){return stats.min[p];});
-  var maxData=periods.map(function(p){return stats.max[p];});
+  var minData=periods.map(function(p){return stats.min[p]!=null?stats.min[p]:0;});
 
-  var bgColors=avgData.map(function(v){return v>=0?barColor:'rgba(239,68,68,0.6)';});
-  var bdColors=avgData.map(function(v){return v>=0?borderColor:'#ef4444';});
+  function colorBySign(val,posColor,negColor){return val>=0?posColor:negColor;}
 
   var chart=new Chart(ctx,{
     type:'bar',
     data:{
       labels:labels,
-      datasets:[{
-        label:label,
-        data:avgData,
-        backgroundColor:bgColors,
-        borderColor:bdColors,
-        borderWidth:2,
-        borderRadius:8,
-        barPercentage:0.55,
-        categoryPercentage:0.7
-      }]
+      datasets:[
+        {
+          label:'최고',
+          data:maxData,
+          backgroundColor:maxData.map(function(v){return colorBySign(v,colors.light,'rgba(239,68,68,0.3)');}),
+          borderColor:maxData.map(function(v){return colorBySign(v,colors.lightBorder,'rgba(239,68,68,0.6)');}),
+          borderWidth:1.5,
+          borderRadius:6,
+          barPercentage:0.75,
+          categoryPercentage:0.7
+        },
+        {
+          label:'평균',
+          data:avgData,
+          backgroundColor:avgData.map(function(v){return colorBySign(v,colors.main,'rgba(239,68,68,0.6)');}),
+          borderColor:avgData.map(function(v){return colorBySign(v,colors.mainBorder,'#ef4444');}),
+          borderWidth:2,
+          borderRadius:6,
+          barPercentage:0.75,
+          categoryPercentage:0.7
+        },
+        {
+          label:'최저',
+          data:minData,
+          backgroundColor:minData.map(function(v){return colorBySign(v,colors.light,'rgba(239,68,68,0.3)');}),
+          borderColor:minData.map(function(v){return colorBySign(v,colors.lightBorder,'rgba(239,68,68,0.6)');}),
+          borderWidth:1.5,
+          borderRadius:6,
+          barPercentage:0.75,
+          categoryPercentage:0.7
+        }
+      ]
     },
     options:{
       interaction:{intersect:false,mode:'index'},
       plugins:{
-        legend:{display:false},
+        legend:{display:true,position:'top',labels:{color:'#8a8a8a',font:{size:10,family:"'JetBrains Mono',monospace"},boxWidth:10,padding:14,usePointStyle:true,pointStyle:'rectRounded'}},
         tooltip:{
           backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#ccc',
           borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,
           callbacks:{
-            label:function(c){
-              var idx=c.dataIndex;
-              var lines=['평균: '+formatPct(c.raw)];
-              if(maxData[idx]!=null)lines.push('최고: '+formatPct(maxData[idx]));
-              if(minData[idx]!=null)lines.push('최저: '+formatPct(minData[idx]));
-              return lines;
-            }
+            label:function(c){return c.dataset.label+': '+formatPct(c.raw);}
           }
         },
         annotation:{
           annotations:{
-            zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[4,4]}
+            zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'rgba(255,255,255,0.25)',borderWidth:1.5,borderDash:[6,4],label:{display:true,content:'0%',position:'start',backgroundColor:'transparent',color:'rgba(255,255,255,0.3)',font:{size:9,family:"'JetBrains Mono',monospace"}}}
           }
         }
       },
@@ -783,9 +782,8 @@ function buildSingleJourneyChart(canvasId,chartRef,stats,barColor,borderColor,wh
         y:{grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return formatPct(v);}}}
       }
     },
-    plugins:[whiskerPlugin]
+    plugins:[barLabelPlugin]
   });
-  chart._whiskerData={min:minData,max:maxData,color:whiskerColor};
   return chart;
 }
 
@@ -796,16 +794,22 @@ function buildJourneyCharts(buyStats,sellStats){
   document.querySelectorAll('.jc-buy-th').forEach(function(el){el.textContent=buyTh;});
   document.querySelectorAll('.jc-sell-th').forEach(function(el){el.textContent=sellTh;});
 
-  // Buy journey chart
+  // Buy journey chart — green 3-tone
   document.getElementById('buyJourneyCount').textContent=buyStats.count;
   if(buyStats.count>0){
-    buyJourneyChart=buildSingleJourneyChart('buyJourneyChart',buyJourneyChart,buyStats,'rgba(34,197,94,0.6)','#22c55e','rgba(34,197,94,0.5)','공포 매수 평균 수익률');
+    buyJourneyChart=buildSingleJourneyChart('buyJourneyChart',buyJourneyChart,buyStats,{
+      light:'rgba(34,197,94,0.25)',lightBorder:'rgba(34,197,94,0.5)',
+      main:'rgba(34,197,94,0.65)',mainBorder:'#22c55e'
+    });
   }
 
-  // Sell journey chart — orange color scheme
+  // Sell journey chart — orange 3-tone
   document.getElementById('sellJourneyCount').textContent=sellStats.count;
   if(sellStats.count>0){
-    sellJourneyChart=buildSingleJourneyChart('sellJourneyChart',sellJourneyChart,sellStats,'rgba(251,146,60,0.6)','#fb923c','rgba(251,146,60,0.5)','탐욕 매도 후 가격 변화');
+    sellJourneyChart=buildSingleJourneyChart('sellJourneyChart',sellJourneyChart,sellStats,{
+      light:'rgba(251,146,60,0.25)',lightBorder:'rgba(251,146,60,0.5)',
+      main:'rgba(251,146,60,0.65)',mainBorder:'#fb923c'
+    });
   }
 }
 
