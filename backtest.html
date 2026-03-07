@@ -345,7 +345,7 @@ var shareBtnHTML='<button class="share-btn share-btn--x" onclick="doShare(\'twit
 +'<button class="share-btn share-btn--copy" onclick="doShare(\'link\',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="label-text">링크 복사</span></button>';
 document.getElementById('shareBtns').innerHTML=shareBtnHTML;
 
-var SHARE_URL='https://herdvibe.com/68/backtest';
+var SHARE_URL='https://herdvibe.com/119';
 function ensureKakao(){try{if(typeof Kakao!=='undefined'&&!Kakao.isInitialized())Kakao.init('a43ed7b39fac35458f4f9df925a279b5');return typeof Kakao!=='undefined'&&Kakao.isInitialized();}catch(e){return false;}}
 ensureKakao();
 function copyToClipboard(t){if(window.parent!==window){window.parent.postMessage({type:'copy',text:t},'*')}if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){navigator.clipboard.writeText(t).catch(function(){_fbCopy(t)})}else{_fbCopy(t)}}
