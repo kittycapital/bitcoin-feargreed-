@@ -581,11 +581,11 @@ function buildZoneChart(){
     options:{
       interaction:{intersect:false,mode:'index'},
       plugins:{
-        legend:{display:true,position:'top',labels:{color:'#8a8a8a',font:{size:10},boxWidth:8,padding:16,generateLabels:function(chart){
+        legend:{display:true,position:'top',labels:{color:'#ccc',font:{size:11,weight:'500'},boxWidth:12,boxHeight:12,padding:16,usePointStyle:false,generateLabels:function(chart){
           return[
-            {text:'BTC Price',fillColor:'transparent',strokeStyle:'#e5e5e5',lineWidth:2},
-            {text:'매수 존 (FNG ≤ '+buyTh+')',fillColor:'rgba(34,197,94,0.15)',strokeStyle:'rgba(34,197,94,0.4)',lineWidth:1},
-            {text:'매도 존 (FNG ≥ '+sellTh+')',fillColor:'rgba(239,68,68,0.15)',strokeStyle:'rgba(239,68,68,0.4)',lineWidth:1}
+            {text:'BTC Price',fillColor:'rgba(229,229,229,0.3)',strokeStyle:'#e5e5e5',lineWidth:2},
+            {text:'매수 존 (FNG ≤ '+buyTh+')',fillColor:'rgba(34,197,94,0.35)',strokeStyle:'#22c55e',lineWidth:2},
+            {text:'매도 존 (FNG ≥ '+sellTh+')',fillColor:'rgba(239,68,68,0.35)',strokeStyle:'#ef4444',lineWidth:2}
           ];
         }}},
         tooltip:{
