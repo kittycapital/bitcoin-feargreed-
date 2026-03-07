@@ -85,7 +85,12 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .sig-table th{padding:12px 10px;font-weight:600;color:var(--hv-text-primary);text-transform:uppercase;font-size:11px;letter-spacing:.5px;text-align:center;background:var(--hv-bg-elevated);border-bottom:2px solid var(--hv-border-strong)}
 .sig-table td{padding:10px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;color:var(--hv-text-secondary)}
 .sig-table tr:hover td{background:rgba(255,255,255,0.04)}
+.sig-table tfoot td{padding:12px 8px;text-align:center;font-size:14px;font-weight:700;border-top:2px solid var(--hv-border-strong);background:rgba(0,229,204,0.04)}
+.sig-table tfoot td:first-child{text-align:left;padding-left:12px;color:var(--cyan);font-size:12px;letter-spacing:.3px}
 .pos{color:#22c55e}.neg{color:#ef4444}
+.journey-stats{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.journey-stat{font-family:var(--hv-font-mono);font-size:11px;color:var(--hv-text-secondary);background:rgba(255,255,255,0.02);border:1px solid var(--hv-border);border-radius:6px;padding:6px 14px}
+.journey-stat strong{font-weight:600}
 
 /* CHART */
 .chart-wrap{position:relative;width:100%;height:320px}
@@ -264,6 +269,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             <th>날짜</th><th>FNG</th><th>BTC 가격</th><th>30일 후</th><th>90일 후</th><th>180일 후</th><th>1년 후</th>
           </tr></thead>
           <tbody id="buyTableBody"></tbody>
+          <tfoot id="buyTableFoot"></tfoot>
         </table>
       </div>
     </div>
@@ -279,8 +285,18 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             <th>날짜</th><th>FNG</th><th>BTC 가격</th><th>30일 후</th><th>90일 후</th><th>180일 후</th><th>1년 후</th>
           </tr></thead>
           <tbody id="sellTableBody"></tbody>
+          <tfoot id="sellTableFoot"></tfoot>
         </table>
       </div>
+    </div>
+
+    <!-- RETURN JOURNEY CHART -->
+    <div class="card s12" style="animation-delay:.4s">
+      <div class="card-label">AVERAGE RETURN JOURNEY</div>
+      <div class="card-title">📊 평균 수익률 여정</div>
+      <div class="card-desc">매수/매도 시그널 후 시간 경과에 따른 평균 수익률 (모든 기간 데이터가 있는 시그널만 포함)</div>
+      <div class="journey-stats" id="journeyStats"></div>
+      <div class="chart-wrap" style="height:300px"><canvas id="journeyChart"></canvas></div>
     </div>
 
   </div>
@@ -324,7 +340,7 @@ var gridColor='rgba(255,255,255,0.04)';
 
 /* ===== DATA ===== */
 var fullData=null,btcHistory=null,dateMap={};
-var signalChart=null,simChart=null;
+var signalChart=null,simChart=null,journeyChart=null;
 
 function formatPrice(p){return'$'+p.toLocaleString('en-US',{maximumFractionDigits:0});}
 function formatPct(p){return(p>0?'+':'')+p.toFixed(1)+'%';}
@@ -644,6 +660,101 @@ function buildSimulation(){
 }
 
 /* ===== SIGNAL TABLES ===== */
+function calcAvg(sigs){
+  // Only include signals where ALL 4 periods have data
+  var complete=sigs.filter(function(s){return s.returns[30]!=null&&s.returns[90]!=null&&s.returns[180]!=null&&s.returns[365]!=null;});
+  if(complete.length===0)return{avg:{30:null,90:null,180:null,365:null},count:0};
+  var avg={};
+  [30,90,180,365].forEach(function(p){
+    var sum=complete.reduce(function(a,s){return a+s.returns[p];},0);
+    avg[p]=sum/complete.length;
+  });
+  return{avg:avg,count:complete.length};
+}
+
+function buildAvgFootHtml(avgData,label){
+  var html='<tr><td colspan="3" style="text-align:left;padding-left:12px;color:#00e5cc;font-size:12px;font-weight:700">'+label+' ('+avgData.count+'건)</td>';
+  [30,90,180,365].forEach(function(p){
+    var v=avgData.avg[p];
+    if(v==null){html+='<td style="color:var(--hv-text-muted)">—</td>';return;}
+    var cls=v>0?'pos':'neg';
+    html+='<td class="'+cls+'">'+formatPct(v)+'</td>';
+  });
+  html+='</tr>';
+  return html;
+}
+
+function buildJourneyChart(buyAvg,sellAvg){
+  var ctx=document.getElementById('journeyChart');
+  if(journeyChart){journeyChart.destroy();journeyChart=null;}
+
+  var labels=['진입','30일 후','90일 후','180일 후','1년 후'];
+  var buyData=[0,buyAvg.avg[30],buyAvg.avg[90],buyAvg.avg[180],buyAvg.avg[365]];
+  var sellData=[0,sellAvg.avg[30],sellAvg.avg[90],sellAvg.avg[180],sellAvg.avg[365]];
+  var hasBuy=buyAvg.count>0;
+  var hasSell=sellAvg.count>0;
+
+  // Stats
+  var statsHtml='';
+  if(hasBuy)statsHtml+='<div class="journey-stat">🟢 매수 시그널 <strong style="color:#22c55e">'+buyAvg.count+'건</strong> (전 기간 완료)</div>';
+  if(hasSell)statsHtml+='<div class="journey-stat">🔴 매도 시그널 <strong style="color:#ef4444">'+sellAvg.count+'건</strong> (전 기간 완료)</div>';
+  document.getElementById('journeyStats').innerHTML=statsHtml;
+
+  var datasets=[];
+  if(hasBuy){
+    datasets.push({
+      label:'매수 시그널 (공포 매수)',
+      data:buyData,
+      backgroundColor:buyData.map(function(v){return v>=0?'rgba(34,197,94,0.7)':'rgba(239,68,68,0.7)';}),
+      borderColor:buyData.map(function(v){return v>=0?'#22c55e':'#ef4444';}),
+      borderWidth:2,
+      borderRadius:6,
+      barPercentage:hasSell?0.4:0.5,
+      categoryPercentage:0.7
+    });
+  }
+  if(hasSell){
+    datasets.push({
+      label:'매도 시그널 (탐욕 매도)',
+      data:sellData,
+      backgroundColor:sellData.map(function(v){return v>=0?'rgba(34,197,94,0.35)':'rgba(239,68,68,0.35)';}),
+      borderColor:sellData.map(function(v){return v>=0?'rgba(34,197,94,0.8)':'rgba(239,68,68,0.8)';}),
+      borderWidth:2,
+      borderRadius:6,
+      borderDash:[4,4],
+      barPercentage:hasBuy?0.4:0.5,
+      categoryPercentage:0.7
+    });
+  }
+
+  journeyChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:labels,datasets:datasets},
+    options:{
+      interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#8a8a8a',font:{size:11},boxWidth:12,padding:16}},
+        tooltip:{
+          backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',
+          borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,
+          callbacks:{
+            label:function(c){return c.dataset.label+': '+formatPct(c.raw);}
+          }
+        },
+        annotation:{
+          annotations:{
+            zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'rgba(255,255,255,0.2)',borderWidth:1,borderDash:[4,4]}
+          }
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},ticks:{color:'#ccc',font:{size:12,weight:'600'}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return formatPct(v);}}}
+      }
+    }
+  });
+}
+
 function buildSignalTables(){
   var buyTh=parseInt(document.getElementById('buyThresh').value);
   var sellTh=parseInt(document.getElementById('sellThresh').value);
@@ -672,6 +783,10 @@ function buildSignalTables(){
   var buyWinPct=buyTotal>0?Math.round((buyWins/buyTotal)*100):0;
   document.getElementById('buyWinRate').textContent='1년 보유 승률: '+buyWinPct+'% ('+buyWins+'/'+buyTotal+')';
 
+  // Buy average row
+  var buyAvg=calcAvg(buySigs);
+  document.getElementById('buyTableFoot').innerHTML=buildAvgFootHtml(buyAvg,'📊 평균');
+
   // SELL table
   var sellSigs=findSignals(sellTh,'sell');
   var sellHtml='';
@@ -684,7 +799,6 @@ function buildSignalTables(){
     [30,90,180,365].forEach(function(p){
       var r=s.returns[p];
       if(r==null){sellHtml+='<td style="color:var(--hv-text-muted)">—</td>';return;}
-      // For sell signals, negative = good (price dropped after you sold)
       var cls=r<0?'pos':'neg';
       sellHtml+='<td class="'+cls+'">'+formatPct(r)+'</td>';
       if(p===365&&r!=null){sellTotal++;if(r<0)sellWins++;}
@@ -694,6 +808,13 @@ function buildSignalTables(){
   document.getElementById('sellTableBody').innerHTML=sellHtml;
   var sellWinPct=sellTotal>0?Math.round((sellWins/sellTotal)*100):0;
   document.getElementById('sellWinRate').textContent='1년 후 하락 비율: '+sellWinPct+'% ('+sellWins+'/'+sellTotal+')';
+
+  // Sell average row
+  var sellAvg=calcAvg(sellSigs);
+  document.getElementById('sellTableFoot').innerHTML=buildAvgFootHtml(sellAvg,'📊 평균');
+
+  // Journey chart
+  buildJourneyChart(buyAvg,sellAvg);
 
   // Summary bar
   document.getElementById('sumBuySignals').textContent=buySigs.length+'건';
