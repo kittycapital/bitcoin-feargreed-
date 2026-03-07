@@ -207,7 +207,30 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <button class="preset-btn" data-buy="20" data-sell="80">보수적 (20/80)</button>
         <button class="preset-btn" data-buy="30" data-sell="70">적극적 (30/70)</button>
       </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hv-border)">
+        <div class="ctrl-row">
+          <div class="ctrl-group" style="min-width:160px">
+            <div class="ctrl-label">시작 년도</div>
+            <div class="ctrl-val" id="yearStartVal">2018</div>
+            <input type="range" id="yearStart" min="2018" max="2026" value="2018" step="1">
+          </div>
+          <div class="ctrl-group" style="min-width:160px">
+            <div class="ctrl-label">끝 년도</div>
+            <div class="ctrl-val" id="yearEndVal">2026</div>
+            <input type="range" id="yearEnd" min="2018" max="2026" value="2026" step="1">
+          </div>
+        </div>
+        <div class="ctrl-presets" id="cyclePresets">
+          <span style="font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-tertiary);margin-right:4px">사이클:</span>
+          <button class="preset-btn cycle-btn active" data-start="2018" data-end="2026">전체</button>
+          <button class="preset-btn cycle-btn" data-start="2018" data-end="2020">2018-2020 약세</button>
+          <button class="preset-btn cycle-btn" data-start="2020" data-end="2021">2020-2021 불장</button>
+          <button class="preset-btn cycle-btn" data-start="2022" data-end="2023">2022-2023 약세</button>
+          <button class="preset-btn cycle-btn" data-start="2024" data-end="2026">2024-현재 불장</button>
+        </div>
+      </div>
       <div class="summary-bar" id="summaryBar">
+        <div class="summary-item">기간: <strong id="sumPeriod">—</strong></div>
         <div class="summary-item">데이터: <strong id="sumDataDays">—</strong></div>
         <div class="summary-item">매수 시그널: <strong id="sumBuySignals">—</strong></div>
         <div class="summary-item">매도 시그널: <strong id="sumSellSignals">—</strong></div>
@@ -394,6 +417,17 @@ function getPrice(dateStr){
   return null;
 }
 
+/* Year range filter */
+function getYearRange(){
+  var s=parseInt(document.getElementById('yearStart').value);
+  var e=parseInt(document.getElementById('yearEnd').value);
+  return{start:s+'-01-01',end:e+'-12-31'};
+}
+function isInRange(dateStr){
+  var yr=getYearRange();
+  return dateStr>=yr.start&&dateStr<=yr.end;
+}
+
 /* Find signals with cooldown to avoid clustering */
 function findSignals(threshold,direction,cooldownDays){
   if(!fullData)return[];
@@ -404,6 +438,7 @@ function findSignals(threshold,direction,cooldownDays){
     var fng=fullData.fng_index[i];
     if(fng==null)continue;
     var d=fullData.dates[i];
+    if(!isInRange(d))continue;
     var price=dateMap[d]?dateMap[d].price:fullData.btc_prices[i];
     if(price==null||price<=0)continue;
     var pass=direction==='buy'?(fng<=threshold):(fng>=threshold);
@@ -489,9 +524,12 @@ function buildSignalChart(){
   var buyDates={};buySigs.forEach(function(s){buyDates[s.date]=s;});
   var sellDates={};sellSigs.forEach(function(s){sellDates[s.date]=s;});
 
-  // Use merged dates (includes btc_history.json) for full price history
-  var dates=mergedDates;
-  var prices=mergedPrices;
+  // Use merged dates filtered by year range
+  var yr=getYearRange();
+  var filteredIdx=[];
+  for(var fi=0;fi<mergedDates.length;fi++){if(mergedDates[fi]>=yr.start&&mergedDates[fi]<=yr.end)filteredIdx.push(fi);}
+  var dates=filteredIdx.map(function(i){return mergedDates[i];});
+  var prices=filteredIdx.map(function(i){return mergedPrices[i];});
   var buyPoints=dates.map(function(d,i){return buyDates[d]?prices[i]:null;});
   var sellPoints=dates.map(function(d,i){return sellDates[d]?prices[i]:null;});
 
@@ -559,6 +597,8 @@ function buildZoneAnalysis(){
     for(var i=0;i<fullData.dates.length;i++){
       var fng=fullData.fng_index[i];
       if(fng==null)continue;
+      var d=fullData.dates[i];
+      if(!isInRange(d))continue;
       if(fng>=z.range[0]&&fng<(z.range[1]===100?101:z.range[1])){
         days++;
         var futurePrice=getPrice(addDays(fullData.dates[i],30));
@@ -875,12 +915,17 @@ function buildSignalTables(){
   buildJourneyCharts(buyAvg,sellAvg);
 
   // Summary bar
+  var filteredDays=fullData.dates.filter(function(d,i){return fullData.fng_index[i]!=null&&isInRange(d);}).length;
+  document.getElementById('sumDataDays').textContent=filteredDays+'일';
   document.getElementById('sumBuySignals').textContent=buySigs.length+'건';
   document.getElementById('sumSellSignals').textContent=sellSigs.length+'건';
 }
 
 /* ===== UPDATE ALL ===== */
 function updateAll(){
+  // Update period summary
+  var yr=getYearRange();
+  document.getElementById('sumPeriod').textContent=document.getElementById('yearStart').value+' ~ '+document.getElementById('yearEnd').value;
   buildHeatmap();
   buildSignalChart();
   buildZoneAnalysis();
@@ -906,9 +951,28 @@ document.getElementById('investAmt').addEventListener('input',function(){
   scheduleUpdate();
 });
 
-document.querySelectorAll('.preset-btn').forEach(function(btn){
+/* Year range sliders */
+document.getElementById('yearStart').addEventListener('input',function(){
+  var sv=parseInt(this.value);
+  var ev=parseInt(document.getElementById('yearEnd').value);
+  if(sv>ev){document.getElementById('yearEnd').value=sv;document.getElementById('yearEndVal').textContent=sv;}
+  document.getElementById('yearStartVal').textContent=sv;
+  document.querySelectorAll('.cycle-btn').forEach(function(b){b.classList.remove('active');});
+  scheduleUpdate();
+});
+document.getElementById('yearEnd').addEventListener('input',function(){
+  var ev=parseInt(this.value);
+  var sv=parseInt(document.getElementById('yearStart').value);
+  if(ev<sv){document.getElementById('yearStart').value=ev;document.getElementById('yearStartVal').textContent=ev;}
+  document.getElementById('yearEndVal').textContent=ev;
+  document.querySelectorAll('.cycle-btn').forEach(function(b){b.classList.remove('active');});
+  scheduleUpdate();
+});
+
+/* Strategy presets */
+document.querySelectorAll('.preset-btn:not(.cycle-btn)').forEach(function(btn){
   btn.addEventListener('click',function(){
-    document.querySelectorAll('.preset-btn').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('.preset-btn:not(.cycle-btn)').forEach(function(b){b.classList.remove('active');});
     btn.classList.add('active');
     var buyV=parseInt(btn.dataset.buy);
     var sellV=parseInt(btn.dataset.sell);
@@ -916,6 +980,21 @@ document.querySelectorAll('.preset-btn').forEach(function(btn){
     document.getElementById('buyThreshVal').textContent=buyV;
     document.getElementById('sellThresh').value=sellV;
     document.getElementById('sellThreshVal').textContent=sellV;
+    scheduleUpdate();
+  });
+});
+
+/* Cycle presets */
+document.querySelectorAll('.cycle-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.cycle-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    var startV=parseInt(btn.dataset.start);
+    var endV=parseInt(btn.dataset.end);
+    document.getElementById('yearStart').value=startV;
+    document.getElementById('yearStartVal').textContent=startV;
+    document.getElementById('yearEnd').value=endV;
+    document.getElementById('yearEndVal').textContent=endV;
     scheduleUpdate();
   });
 });
