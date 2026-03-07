@@ -49,15 +49,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .preset-btn{padding:4px 12px;border-radius:5px;font-family:var(--hv-font-mono);font-size:10px;font-weight:500;color:#999;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .2s}
 .preset-btn:hover,.preset-btn.active{color:var(--cyan);background:rgba(0,229,204,.08);border-color:rgba(0,229,204,.2)}
 
-/* HEATMAP */
-.heatmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.heatmap{width:100%;border-collapse:collapse;font-family:var(--hv-font-mono);font-size:11px}
-.heatmap th{padding:8px 6px;font-weight:500;color:var(--hv-text-tertiary);text-transform:uppercase;font-size:10px;letter-spacing:.5px;text-align:center;border-bottom:1px solid var(--hv-border)}
-.heatmap td{padding:10px 8px;text-align:center;font-weight:600;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.02);cursor:default;transition:all .2s;position:relative}
-.heatmap td:hover{transform:scale(1.05);z-index:2}
-.heatmap td .sub{display:block;font-size:9px;font-weight:400;opacity:.6;margin-top:2px}
-.heatmap .row-label{text-align:left;color:var(--hv-text-secondary);font-weight:500;font-size:11px;white-space:nowrap;padding-left:12px}
-.hm-section-title{font-size:12px;font-weight:600;color:var(--hv-text-primary);padding:14px 12px 8px;text-align:left;border-bottom:1px solid var(--hv-border-strong);letter-spacing:.3px}
+
 
 /* ZONE ANALYSIS */
 .zone-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
@@ -153,8 +145,30 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   .hv-page{padding:12px 10px 24px}
   .zone-grid{grid-template-columns:repeat(2,1fr)}
   .sim-stats{grid-template-columns:1fr 1fr}
-  .heatmap{font-size:10px}
-  .heatmap td{padding:6px 4px;font-size:10px}
+
+}
+/* OPTIMAL BOX */
+.optimal-box{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.optimal-card{background:rgba(0,229,204,0.04);border:1px solid rgba(0,229,204,0.15);border-radius:10px;padding:16px 24px;text-align:center;min-width:180px}
+.optimal-card.sell{background:rgba(255,74,106,0.04);border-color:rgba(255,74,106,0.15)}
+.optimal-card-label{font-family:var(--hv-font-mono);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--hv-text-tertiary);margin-bottom:4px}
+.optimal-card-value{font-family:var(--hv-font-mono);font-size:24px;font-weight:700}
+.optimal-card-sub{font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-secondary);margin-top:4px}
+.disclaimer{font-size:10.5px;color:var(--hv-text-tertiary);text-align:center;line-height:1.6;padding:14px 20px;border-top:1px solid var(--hv-border);margin-top:14px}
+/* CYCLE STABILITY */
+.cycle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cycle-card{background:rgba(255,255,255,0.02);border:1px solid var(--hv-border);border-radius:8px;padding:14px 10px;text-align:center;transition:all .2s}
+.cycle-card:hover{background:rgba(255,255,255,0.04)}
+.cycle-name{font-size:10px;font-weight:600;color:var(--hv-text-secondary);margin-bottom:6px}
+.cycle-val{font-family:var(--hv-font-mono);font-size:18px;font-weight:700}
+.cycle-sub{font-family:var(--hv-font-mono);font-size:10px;color:var(--hv-text-tertiary);margin-top:2px}
+.cycle-bar{height:4px;border-radius:2px;margin-top:8px;background:rgba(255,255,255,0.06);overflow:hidden}
+.cycle-bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+@media(max-width:768px){
+  .cycle-grid{grid-template-columns:repeat(2,1fr)}
+  .optimal-box{gap:10px}
+  .optimal-card{min-width:140px;padding:12px 16px}
+  .optimal-card-value{font-size:20px}
 }
 </style>
 </head>
@@ -312,17 +326,26 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </div>
     </div>
 
-    <!-- HEATMAP (bottom) -->
+    <!-- BUY/SELL ZONE CHART -->
     <div class="card s12" style="animation-delay:.4s">
-      <div class="card-label">RETURN HEATMAP</div>
-      <div class="card-title">🔥 수익률 히트맵 매트릭스</div>
-      <div class="card-desc">FNG 임계값 × 보유 기간 조합별 평균 수익률. 색상이 진할수록 높은 수익률.</div>
-      <div class="heatmap-wrap">
-        <table class="heatmap" id="heatmapTable">
-          <thead><tr><th></th><th>30일</th><th>90일</th><th>180일</th><th>365일</th></tr></thead>
-          <tbody id="heatmapBody"></tbody>
-        </table>
+      <div class="card-label">OPTIMAL ZONE MAP</div>
+      <div class="card-title">🗺️ 매수·매도 존 시각화</div>
+      <div class="card-desc">BTC 가격 위에 FNG 기반 매수 존(초록)과 매도 존(빨강)을 표시합니다 · 슬라이더 설정이 실시간 반영됩니다</div>
+      <div class="optimal-box" id="optimalBox"></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px">
+        <button class="preset-btn" id="zoneZoomReset" onclick="if(zoneChart)zoneChart.resetZoom()">↻ 리셋</button>
       </div>
+      <div class="chart-wrap" style="height:360px"><canvas id="zoneChart"></canvas></div>
+      <div class="disclaimer">⚠️ 과거 데이터 기반 분석이며 미래 수익을 보장하지 않습니다. 투자 판단은 본인의 책임입니다.</div>
+    </div>
+
+    <!-- CYCLE STABILITY -->
+    <div class="card s12" style="animation-delay:.45s">
+      <div class="card-label">CYCLE STABILITY</div>
+      <div class="card-title">🔄 사이클별 전략 안정성</div>
+      <div class="card-desc">현재 매수 전략(FNG ≤ <span class="cs-buy-th">25</span>)이 각 시장 사이클에서 얼마나 일관되게 작동했는지 보여줍니다</div>
+      <div class="cycle-grid" id="cycleGrid"></div>
+      <div id="cycleVerdict" style="text-align:center;margin-top:14px;font-family:var(--hv-font-mono);font-size:12px;color:var(--hv-text-secondary)"></div>
     </div>
 
   </div>
@@ -465,54 +488,228 @@ function findSignals(threshold,direction,cooldownDays){
   return signals;
 }
 
-/* ===== HEATMAP ===== */
-function buildHeatmap(){
-  var buyThresholds=[10,15,20,25,30];
-  var sellThresholds=[70,75,80,85,90];
-  var periods=[30,90,180,365];
-  var periodLabels=['30일','90일','180일','365일'];
+/* ===== ZONE MAP CHART ===== */
+var zoneChart=null;
+function buildZoneChart(){
+  var buyTh=parseInt(document.getElementById('buyThresh').value);
+  var sellTh=parseInt(document.getElementById('sellThresh').value);
+  var yr=getYearRange();
+
+  // Build filtered data
+  var filteredIdx=[];
+  for(var fi=0;fi<mergedDates.length;fi++){if(mergedDates[fi]>=yr.start&&mergedDates[fi]<=yr.end)filteredIdx.push(fi);}
+  var dates=filteredIdx.map(function(i){return mergedDates[i];});
+  var prices=filteredIdx.map(function(i){return mergedPrices[i];});
+  var fngs=filteredIdx.map(function(i){return mergedFng[i];});
+
+  // Build zone annotations (contiguous buy/sell regions)
+  var annotations={};
+  var buyZoneStart=null,sellZoneStart=null;
+  var buyDays=0,sellDays=0,totalDays=dates.length;
+
+  for(var i=0;i<dates.length;i++){
+    var fng=fngs[i];
+    var isBuy=fng!=null&&fng<=buyTh;
+    var isSell=fng!=null&&fng>=sellTh;
+
+    // Buy zones
+    if(isBuy){
+      buyDays++;
+      if(buyZoneStart==null)buyZoneStart=dates[i];
+    }else{
+      if(buyZoneStart!=null){
+        annotations['buy_'+i]={type:'box',xMin:buyZoneStart,xMax:dates[i-1],backgroundColor:'rgba(34,197,94,0.08)',borderColor:'rgba(34,197,94,0.2)',borderWidth:1,borderDash:[3,3]};
+        buyZoneStart=null;
+      }
+    }
+    // Sell zones
+    if(isSell){
+      sellDays++;
+      if(sellZoneStart==null)sellZoneStart=dates[i];
+    }else{
+      if(sellZoneStart!=null){
+        annotations['sell_'+i]={type:'box',xMin:sellZoneStart,xMax:dates[i-1],backgroundColor:'rgba(239,68,68,0.08)',borderColor:'rgba(239,68,68,0.2)',borderWidth:1,borderDash:[3,3]};
+        sellZoneStart=null;
+      }
+    }
+  }
+  // Close any open zones
+  if(buyZoneStart!=null){annotations['buy_end']={type:'box',xMin:buyZoneStart,xMax:dates[dates.length-1],backgroundColor:'rgba(34,197,94,0.08)',borderColor:'rgba(34,197,94,0.2)',borderWidth:1,borderDash:[3,3]};}
+  if(sellZoneStart!=null){annotations['sell_end']={type:'box',xMin:sellZoneStart,xMax:dates[dates.length-1],backgroundColor:'rgba(239,68,68,0.08)',borderColor:'rgba(239,68,68,0.2)',borderWidth:1,borderDash:[3,3]};}
+
+  // Optimal box stats
+  var buyPct=totalDays>0?((buyDays/totalDays)*100).toFixed(1):'0';
+  var sellPct=totalDays>0?((sellDays/totalDays)*100).toFixed(1):'0';
+  // Calculate avg return for buy zones (1yr)
+  var buySigs=findSignals(buyTh,'buy');
+  var buyReturns365=buySigs.map(function(s){return s.returns[365];}).filter(function(v){return v!=null;});
+  var avgBuyReturn=buyReturns365.length>0?(buyReturns365.reduce(function(a,b){return a+b;},0)/buyReturns365.length):null;
+  var buyWins365=buyReturns365.filter(function(v){return v>0;}).length;
+  var buyWinRate=buyReturns365.length>0?Math.round((buyWins365/buyReturns365.length)*100):0;
+
+  var sellSigs=findSignals(sellTh,'sell');
+  var sellReturns365=sellSigs.map(function(s){return s.returns[365];}).filter(function(v){return v!=null;});
+  var avgSellReturn=sellReturns365.length>0?(sellReturns365.reduce(function(a,b){return a+b;},0)/sellReturns365.length):null;
+  var sellWins365=sellReturns365.filter(function(v){return v<0;}).length;
+  var sellWinRate=sellReturns365.length>0?Math.round((sellWins365/sellReturns365.length)*100):0;
+
+  var boxHtml='';
+  boxHtml+='<div class="optimal-card"><div class="optimal-card-label">매수 존 (FNG ≤ '+buyTh+')</div>';
+  boxHtml+='<div class="optimal-card-value" style="color:#22c55e">'+buyDays+'일</div>';
+  boxHtml+='<div class="optimal-card-sub">전체의 '+buyPct+'% · 시그널 '+buySigs.length+'건</div>';
+  if(avgBuyReturn!=null)boxHtml+='<div class="optimal-card-sub">1년 보유 평균 '+formatPct(avgBuyReturn)+' · 승률 '+buyWinRate+'%</div>';
+  boxHtml+='</div>';
+  boxHtml+='<div class="optimal-card sell"><div class="optimal-card-label">매도 존 (FNG ≥ '+sellTh+')</div>';
+  boxHtml+='<div class="optimal-card-value" style="color:#ef4444">'+sellDays+'일</div>';
+  boxHtml+='<div class="optimal-card-sub">전체의 '+sellPct+'% · 시그널 '+sellSigs.length+'건</div>';
+  if(avgSellReturn!=null)boxHtml+='<div class="optimal-card-sub">매도 후 1년 변화 '+formatPct(avgSellReturn)+' · 매도승률 '+sellWinRate+'%</div>';
+  boxHtml+='</div>';
+  document.getElementById('optimalBox').innerHTML=boxHtml;
+
+  // Chart
+  var ctx=document.getElementById('zoneChart');
+  if(zoneChart){zoneChart.destroy();zoneChart=null;}
+
+  zoneChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:dates,
+      datasets:[
+        {label:'BTC Price',data:prices,borderColor:'#e5e5e5',backgroundColor:'rgba(229,229,229,0.03)',fill:true,borderWidth:1.8,tension:.3,pointRadius:0,spanGaps:true}
+      ]
+    },
+    options:{
+      interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#8a8a8a',font:{size:10},boxWidth:8,padding:16,generateLabels:function(chart){
+          return[
+            {text:'BTC Price',fillColor:'transparent',strokeStyle:'#e5e5e5',lineWidth:2},
+            {text:'매수 존 (FNG ≤ '+buyTh+')',fillColor:'rgba(34,197,94,0.15)',strokeStyle:'rgba(34,197,94,0.4)',lineWidth:1},
+            {text:'매도 존 (FNG ≥ '+sellTh+')',fillColor:'rgba(239,68,68,0.15)',strokeStyle:'rgba(239,68,68,0.4)',lineWidth:1}
+          ];
+        }}},
+        tooltip:{
+          backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',
+          borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,
+          callbacks:{
+            title:function(c){return getDateFromString(dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{year:'numeric',month:'short',day:'numeric'});},
+            label:function(c){
+              var fng=fngs[c.dataIndex];
+              var fngStr=fng!=null?(' · FNG: '+Math.round(fng)):'';
+              var zone='';
+              if(fng!=null&&fng<=buyTh)zone=' 🟢 매수존';
+              else if(fng!=null&&fng>=sellTh)zone=' 🔴 매도존';
+              return 'BTC: '+formatPrice(c.raw)+fngStr+zone;
+            }
+          }
+        },
+        annotation:{annotations:annotations},
+        zoom:{
+          pan:{enabled:true,mode:'x',modifierKey:null},
+          zoom:{wheel:{enabled:true,speed:0.05},pinch:{enabled:true},drag:{enabled:false},mode:'x'},
+          limits:{x:{minRange:30*86400000}}
+        }
+      },
+      scales:{
+        x:{type:'time',time:{unit:'quarter',displayFormats:{quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},
+        y:{type:'logarithmic',grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){if([1000,3000,5000,10000,20000,30000,50000,100000,200000].indexOf(v)>=0)return'$'+(v>=1000?(v/1000).toFixed(0)+'k':v);return'';}}}
+      }
+    }
+  });
+}
+
+/* ===== CYCLE STABILITY ===== */
+function buildCycleStability(){
+  var buyTh=parseInt(document.getElementById('buyThresh').value);
+  document.querySelectorAll('.cs-buy-th').forEach(function(el){el.textContent=buyTh;});
+
+  var cycles=[
+    {name:'2018-2020',label:'약세장',start:'2018-01-01',end:'2020-03-31',emoji:'📉'},
+    {name:'2020-2021',label:'불장',start:'2020-04-01',end:'2021-11-30',emoji:'🚀'},
+    {name:'2022-2023',label:'약세장',start:'2022-01-01',end:'2023-09-30',emoji:'📉'},
+    {name:'2024-현재',label:'불장',start:'2024-01-01',end:'2026-12-31',emoji:'🚀'}
+  ];
+
+  var results=[];
+  var allPositive=true;
+
+  cycles.forEach(function(cyc){
+    // Find signals in this cycle
+    var sigs=[];
+    if(!fullData)return;
+    var lastSigDate=null;
+    for(var i=0;i<fullData.dates.length;i++){
+      var fng=fullData.fng_index[i];
+      if(fng==null)continue;
+      var d=fullData.dates[i];
+      if(d<cyc.start||d>cyc.end)continue;
+      var price=dateMap[d]?dateMap[d].price:fullData.btc_prices[i];
+      if(price==null||price<=0)continue;
+      if(fng>buyTh)continue;
+      if(lastSigDate){var diff=(getDateFromString(d)-getDateFromString(lastSigDate))/86400000;if(diff<7)continue;}
+      var sig={date:d,fng:fng,price:price,returns:{}};
+      [30,90,180,365].forEach(function(days){
+        var fp=getPrice(addDays(d,days));
+        if(fp!=null)sig.returns[days]=((fp-price)/price)*100;
+        else sig.returns[days]=null;
+      });
+      sigs.push(sig);
+      lastSigDate=d;
+    }
+
+    // Calculate stats (use 365-day return if available, fallback to 180, 90, 30)
+    var period=365;
+    var returns=sigs.map(function(s){return s.returns[period];}).filter(function(v){return v!=null;});
+    if(returns.length===0){period=180;returns=sigs.map(function(s){return s.returns[period];}).filter(function(v){return v!=null;});}
+    if(returns.length===0){period=90;returns=sigs.map(function(s){return s.returns[period];}).filter(function(v){return v!=null;});}
+    if(returns.length===0){period=30;returns=sigs.map(function(s){return s.returns[period];}).filter(function(v){return v!=null;});}
+
+    var avg=returns.length>0?(returns.reduce(function(a,b){return a+b;},0)/returns.length):null;
+    var wins=returns.filter(function(v){return v>0;}).length;
+    var winRate=returns.length>0?Math.round((wins/returns.length)*100):null;
+    if(avg!=null&&avg<=0)allPositive=false;
+    if(avg==null)allPositive=false;
+
+    results.push({cycle:cyc,signals:sigs.length,avgReturn:avg,winRate:winRate,period:period,sampleCount:returns.length});
+  });
+
+  // Render
   var html='';
+  results.forEach(function(r){
+    var valColor=r.avgReturn!=null?(r.avgReturn>0?'#22c55e':'#ef4444'):'var(--hv-text-muted)';
+    var valText=r.avgReturn!=null?formatPct(r.avgReturn):'—';
+    var periodLabel=r.period===365?'1년':r.period+'일';
+    // Win rate bar
+    var barColor=r.winRate!=null?(r.winRate>=60?'#22c55e':r.winRate>=45?'#f59e0b':'#ef4444'):'#333';
+    var barWidth=r.winRate!=null?r.winRate:0;
+    // Reliability color
+    var reliColor=r.sampleCount>=10?'#22c55e':r.sampleCount>=5?'#f59e0b':'#ef4444';
 
-  // BUY section
-  html+='<tr><td colspan="5" class="hm-section-title">🟢 매수 시그널 (FNG ≤ 임계값) → 평균 수익률</td></tr>';
-  buyThresholds.forEach(function(th){
-    var sigs=findSignals(th,'buy');
-    html+='<tr><td class="row-label">FNG ≤ '+th+' <span style="color:var(--hv-text-muted);font-size:9px">('+sigs.length+'건)</span></td>';
-    periods.forEach(function(p){
-      var vals=sigs.map(function(s){return s.returns[p];}).filter(function(v){return v!=null;});
-      if(vals.length===0){html+='<td style="color:var(--hv-text-muted)">—</td>';return;}
-      var avg=vals.reduce(function(a,b){return a+b;},0)/vals.length;
-      var median=vals.sort(function(a,b){return a-b;})[Math.floor(vals.length/2)];
-      var wins=vals.filter(function(v){return v>0;}).length;
-      var winPct=Math.round((wins/vals.length)*100);
-      var bg=avg>0?'rgba(34,197,94,'+Math.min(Math.abs(avg)/200,0.4)+')':'rgba(239,68,68,'+Math.min(Math.abs(avg)/200,0.4)+')';
-      var color=avg>0?'#22c55e':'#ef4444';
-      html+='<td style="background:'+bg+';color:'+color+'">'+formatPct(avg)+'<span class="sub">중앙 '+formatPct(median)+' · 승률 '+winPct+'%</span></td>';
-    });
-    html+='</tr>';
+    html+='<div class="cycle-card">';
+    html+='<div class="cycle-name">'+r.cycle.emoji+' '+r.cycle.name+'<br><span style="color:var(--hv-text-tertiary)">'+r.cycle.label+'</span></div>';
+    html+='<div class="cycle-val" style="color:'+valColor+'">'+valText+'</div>';
+    html+='<div class="cycle-sub">'+periodLabel+' 보유 기준</div>';
+    html+='<div class="cycle-sub">시그널 '+r.signals+'건 · 샘플 <span style="color:'+reliColor+'">'+r.sampleCount+'건</span></div>';
+    if(r.winRate!=null)html+='<div class="cycle-sub">승률 '+r.winRate+'%</div>';
+    html+='<div class="cycle-bar"><div class="cycle-bar-fill" style="width:'+barWidth+'%;background:'+barColor+'"></div></div>';
+    html+='</div>';
   });
+  document.getElementById('cycleGrid').innerHTML=html;
 
-  // SELL section
-  html+='<tr><td colspan="5" class="hm-section-title">🔴 매도 시그널 (FNG ≥ 임계값) → 평균 수익률 (매도했으면 피한 손실)</td></tr>';
-  sellThresholds.forEach(function(th){
-    var sigs=findSignals(th,'sell');
-    html+='<tr><td class="row-label">FNG ≥ '+th+' <span style="color:var(--hv-text-muted);font-size:9px">('+sigs.length+'건)</span></td>';
-    periods.forEach(function(p){
-      var vals=sigs.map(function(s){return s.returns[p];}).filter(function(v){return v!=null;});
-      if(vals.length===0){html+='<td style="color:var(--hv-text-muted)">—</td>';return;}
-      var avg=vals.reduce(function(a,b){return a+b;},0)/vals.length;
-      var median=vals.sort(function(a,b){return a-b;})[Math.floor(vals.length/2)];
-      var wins=vals.filter(function(v){return v<0;}).length; // "win" for sell = price went down
-      var winPct=Math.round((wins/vals.length)*100);
-      // For sell: negative future return = good (price dropped after selling)
-      var bg=avg>0?'rgba(239,68,68,'+Math.min(Math.abs(avg)/200,0.4)+')':'rgba(34,197,94,'+Math.min(Math.abs(avg)/200,0.4)+')';
-      var color=avg>0?'#ef4444':'#22c55e';
-      html+='<td style="background:'+bg+';color:'+color+'">'+formatPct(avg)+'<span class="sub">중앙 '+formatPct(median)+' · 매도승률 '+winPct+'%</span></td>';
-    });
-    html+='</tr>';
-  });
-
-  document.getElementById('heatmapBody').innerHTML=html;
+  // Verdict
+  var positiveCount=results.filter(function(r){return r.avgReturn!=null&&r.avgReturn>0;}).length;
+  var totalValid=results.filter(function(r){return r.avgReturn!=null;}).length;
+  var verdict='';
+  if(totalValid===0){
+    verdict='<span style="color:var(--hv-text-muted)">데이터 부족</span>';
+  }else if(positiveCount===totalValid){
+    verdict='<span style="color:#22c55e">✅ 전략 안정성: 높음</span> — 모든 사이클에서 양의 수익률';
+  }else if(positiveCount>=totalValid*0.75){
+    verdict='<span style="color:#f59e0b">⚠️ 전략 안정성: 보통</span> — '+positiveCount+'/'+totalValid+' 사이클에서 유효';
+  }else{
+    verdict='<span style="color:#ef4444">⛔ 전략 안정성: 낮음</span> — 특정 사이클에서만 유효, 과최적화 가능성';
+  }
+  document.getElementById('cycleVerdict').innerHTML=verdict;
 }
 
 /* ===== SIGNAL CHART ===== */
@@ -926,7 +1123,8 @@ function updateAll(){
   // Update period summary
   var yr=getYearRange();
   document.getElementById('sumPeriod').textContent=document.getElementById('yearStart').value+' ~ '+document.getElementById('yearEnd').value;
-  buildHeatmap();
+  buildZoneChart();
+  buildCycleStability();
   buildSignalChart();
   buildZoneAnalysis();
   buildSimulation();
