@@ -88,9 +88,6 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .sig-table tfoot td{padding:12px 8px;text-align:center;font-size:14px;font-weight:700;border-top:2px solid var(--hv-border-strong);background:rgba(0,229,204,0.04)}
 .sig-table tfoot td:first-child{text-align:left;padding-left:12px;color:var(--cyan);font-size:12px;letter-spacing:.3px}
 .pos{color:#22c55e}.neg{color:#ef4444}
-.journey-stats{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
-.journey-stat{font-family:var(--hv-font-mono);font-size:11px;color:var(--hv-text-secondary);background:rgba(255,255,255,0.02);border:1px solid var(--hv-border);border-radius:6px;padding:6px 14px}
-.journey-stat strong{font-weight:600}
 
 /* CHART */
 .chart-wrap{position:relative;width:100%;height:320px}
@@ -217,21 +214,23 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </div>
     </div>
 
-    <!-- HEATMAP -->
+    <!-- RETURN JOURNEY CHARTS (split: buy top, sell bottom) -->
     <div class="card s12" style="animation-delay:.1s">
-      <div class="card-label">RETURN HEATMAP</div>
-      <div class="card-title">🔥 수익률 히트맵 매트릭스</div>
-      <div class="card-desc">FNG 임계값 × 보유 기간 조합별 평균 수익률. 색상이 진할수록 높은 수익률.</div>
-      <div class="heatmap-wrap">
-        <table class="heatmap" id="heatmapTable">
-          <thead><tr><th></th><th>30일</th><th>90일</th><th>180일</th><th>365일</th></tr></thead>
-          <tbody id="heatmapBody"></tbody>
-        </table>
-      </div>
+      <div class="card-label">BUY SIGNAL RETURNS</div>
+      <div class="card-title">🟢 공포 매수 후 평균 수익률</div>
+      <div class="card-desc">FNG ≤ <span class="jc-buy-th">25</span> 매수 시그널의 기간별 평균 수익률 (모든 기간 데이터가 있는 <span id="buyJourneyCount">—</span>건만 포함) · 세로선: 최고/최저</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="buyJourneyChart"></canvas></div>
+    </div>
+
+    <div class="card s12" style="animation-delay:.13s">
+      <div class="card-label">SELL SIGNAL RETURNS</div>
+      <div class="card-title">🟠 탐욕 매도 후 가격 변화</div>
+      <div class="card-desc">FNG ≥ <span class="jc-sell-th">75</span> 매도 시그널 후 기간별 평균 수익률 (모든 기간 데이터가 있는 <span id="sellJourneyCount">—</span>건만 포함) · 세로선: 최고/최저</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="sellJourneyChart"></canvas></div>
     </div>
 
     <!-- SIGNAL CHART -->
-    <div class="card s12" style="animation-delay:.15s">
+    <div class="card s12" style="animation-delay:.16s">
       <div class="card-label">SIGNAL CHART</div>
       <div class="card-title">📈 시그널 차트</div>
       <div class="card-desc">BTC 가격 위에 매수(🟢) / 매도(🔴) 시그널을 표시합니다 · 마우스 휠로 줌, 드래그로 패닝</div>
@@ -290,13 +289,17 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </div>
     </div>
 
-    <!-- RETURN JOURNEY CHART -->
+    <!-- HEATMAP (bottom) -->
     <div class="card s12" style="animation-delay:.4s">
-      <div class="card-label">AVERAGE RETURN JOURNEY</div>
-      <div class="card-title">📊 평균 수익률 여정</div>
-      <div class="card-desc">매수/매도 시그널 후 시간 경과에 따른 평균 수익률 (모든 기간 데이터가 있는 시그널만 포함)</div>
-      <div class="journey-stats" id="journeyStats"></div>
-      <div class="chart-wrap" style="height:300px"><canvas id="journeyChart"></canvas></div>
+      <div class="card-label">RETURN HEATMAP</div>
+      <div class="card-title">🔥 수익률 히트맵 매트릭스</div>
+      <div class="card-desc">FNG 임계값 × 보유 기간 조합별 평균 수익률. 색상이 진할수록 높은 수익률.</div>
+      <div class="heatmap-wrap">
+        <table class="heatmap" id="heatmapTable">
+          <thead><tr><th></th><th>30일</th><th>90일</th><th>180일</th><th>365일</th></tr></thead>
+          <tbody id="heatmapBody"></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -340,7 +343,7 @@ var gridColor='rgba(255,255,255,0.04)';
 
 /* ===== DATA ===== */
 var fullData=null,btcHistory=null,dateMap={};
-var signalChart=null,simChart=null,journeyChart=null;
+var signalChart=null,simChart=null,buyJourneyChart=null,sellJourneyChart=null;
 
 function formatPrice(p){return'$'+p.toLocaleString('en-US',{maximumFractionDigits:0});}
 function formatPct(p){return(p>0?'+':'')+p.toFixed(1)+'%';}
@@ -660,16 +663,18 @@ function buildSimulation(){
 }
 
 /* ===== SIGNAL TABLES ===== */
-function calcAvg(sigs){
+function calcAvgMinMax(sigs){
   // Only include signals where ALL 4 periods have data
   var complete=sigs.filter(function(s){return s.returns[30]!=null&&s.returns[90]!=null&&s.returns[180]!=null&&s.returns[365]!=null;});
-  if(complete.length===0)return{avg:{30:null,90:null,180:null,365:null},count:0};
-  var avg={};
+  if(complete.length===0)return{avg:{},min:{},max:{},count:0};
+  var avg={},min={},max={};
   [30,90,180,365].forEach(function(p){
-    var sum=complete.reduce(function(a,s){return a+s.returns[p];},0);
-    avg[p]=sum/complete.length;
+    var vals=complete.map(function(s){return s.returns[p];});
+    avg[p]=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+    min[p]=Math.min.apply(null,vals);
+    max[p]=Math.max.apply(null,vals);
   });
-  return{avg:avg,count:complete.length};
+  return{avg:avg,min:min,max:max,count:complete.length};
 }
 
 function buildAvgFootHtml(avgData,label){
@@ -684,75 +689,124 @@ function buildAvgFootHtml(avgData,label){
   return html;
 }
 
-function buildJourneyChart(buyAvg,sellAvg){
-  var ctx=document.getElementById('journeyChart');
-  if(journeyChart){journeyChart.destroy();journeyChart=null;}
-
-  var labels=['진입','30일 후','90일 후','180일 후','1년 후'];
-  var buyData=[0,buyAvg.avg[30],buyAvg.avg[90],buyAvg.avg[180],buyAvg.avg[365]];
-  var sellData=[0,sellAvg.avg[30],sellAvg.avg[90],sellAvg.avg[180],sellAvg.avg[365]];
-  var hasBuy=buyAvg.count>0;
-  var hasSell=sellAvg.count>0;
-
-  // Stats
-  var statsHtml='';
-  if(hasBuy)statsHtml+='<div class="journey-stat">🟢 매수 시그널 <strong style="color:#22c55e">'+buyAvg.count+'건</strong> (전 기간 완료)</div>';
-  if(hasSell)statsHtml+='<div class="journey-stat">🔴 매도 시그널 <strong style="color:#ef4444">'+sellAvg.count+'건</strong> (전 기간 완료)</div>';
-  document.getElementById('journeyStats').innerHTML=statsHtml;
-
-  var datasets=[];
-  if(hasBuy){
-    datasets.push({
-      label:'매수 시그널 (공포 매수)',
-      data:buyData,
-      backgroundColor:buyData.map(function(v){return v>=0?'rgba(34,197,94,0.7)':'rgba(239,68,68,0.7)';}),
-      borderColor:buyData.map(function(v){return v>=0?'#22c55e':'#ef4444';}),
-      borderWidth:2,
-      borderRadius:6,
-      barPercentage:hasSell?0.4:0.5,
-      categoryPercentage:0.7
+/* Whisker plugin — draws min/max lines on bars */
+var whiskerPlugin={
+  id:'whiskerPlugin',
+  afterDatasetsDraw:function(chart){
+    var meta=chart.getDatasetMeta(0);
+    if(!meta||!meta.data||!chart._whiskerData)return;
+    var ctx=chart.ctx;
+    var wd=chart._whiskerData;
+    ctx.save();
+    meta.data.forEach(function(bar,i){
+      if(!wd.min[i]&&wd.min[i]!==0)return;
+      var yScale=chart.scales.y;
+      var yMin=yScale.getPixelForValue(wd.min[i]);
+      var yMax=yScale.getPixelForValue(wd.max[i]);
+      var xCenter=bar.x;
+      var halfW=bar.width?bar.width/2:12;
+      var whiskerW=halfW*0.6;
+      ctx.strokeStyle=wd.color||'rgba(255,255,255,0.5)';
+      ctx.lineWidth=1.5;
+      ctx.setLineDash([]);
+      // vertical line
+      ctx.beginPath();ctx.moveTo(xCenter,yMin);ctx.lineTo(xCenter,yMax);ctx.stroke();
+      // top cap
+      ctx.beginPath();ctx.moveTo(xCenter-whiskerW,yMax);ctx.lineTo(xCenter+whiskerW,yMax);ctx.stroke();
+      // bottom cap
+      ctx.beginPath();ctx.moveTo(xCenter-whiskerW,yMin);ctx.lineTo(xCenter+whiskerW,yMin);ctx.stroke();
+      // labels
+      ctx.font='600 9px "JetBrains Mono",monospace';
+      ctx.textAlign='center';
+      ctx.fillStyle=wd.max[i]>=0?'#22c55e':'#ef4444';
+      ctx.fillText(formatPct(wd.max[i]),xCenter,yMax-6);
+      ctx.fillStyle=wd.min[i]>=0?'#22c55e':'#ef4444';
+      ctx.fillText(formatPct(wd.min[i]),xCenter,yMin+14);
     });
+    ctx.restore();
   }
-  if(hasSell){
-    datasets.push({
-      label:'매도 시그널 (탐욕 매도)',
-      data:sellData,
-      backgroundColor:sellData.map(function(v){return v>=0?'rgba(34,197,94,0.35)':'rgba(239,68,68,0.35)';}),
-      borderColor:sellData.map(function(v){return v>=0?'rgba(34,197,94,0.8)':'rgba(239,68,68,0.8)';}),
-      borderWidth:2,
-      borderRadius:6,
-      borderDash:[4,4],
-      barPercentage:hasBuy?0.4:0.5,
-      categoryPercentage:0.7
-    });
-  }
+};
 
-  journeyChart=new Chart(ctx,{
+function buildSingleJourneyChart(canvasId,chartRef,stats,barColor,borderColor,whiskerColor,label){
+  var ctx=document.getElementById(canvasId);
+  if(chartRef){chartRef.destroy();}
+
+  var labels=['30일 후','90일 후','180일 후','1년 후'];
+  var periods=[30,90,180,365];
+  var avgData=periods.map(function(p){return stats.avg[p]!=null?stats.avg[p]:0;});
+  var minData=periods.map(function(p){return stats.min[p];});
+  var maxData=periods.map(function(p){return stats.max[p];});
+
+  var bgColors=avgData.map(function(v){return v>=0?barColor:'rgba(239,68,68,0.6)';});
+  var bdColors=avgData.map(function(v){return v>=0?borderColor:'#ef4444';});
+
+  var chart=new Chart(ctx,{
     type:'bar',
-    data:{labels:labels,datasets:datasets},
+    data:{
+      labels:labels,
+      datasets:[{
+        label:label,
+        data:avgData,
+        backgroundColor:bgColors,
+        borderColor:bdColors,
+        borderWidth:2,
+        borderRadius:8,
+        barPercentage:0.55,
+        categoryPercentage:0.7
+      }]
+    },
     options:{
       interaction:{intersect:false,mode:'index'},
       plugins:{
-        legend:{display:true,position:'top',labels:{color:'#8a8a8a',font:{size:11},boxWidth:12,padding:16}},
+        legend:{display:false},
         tooltip:{
-          backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',
+          backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#ccc',
           borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,
           callbacks:{
-            label:function(c){return c.dataset.label+': '+formatPct(c.raw);}
+            label:function(c){
+              var idx=c.dataIndex;
+              var lines=['평균: '+formatPct(c.raw)];
+              if(maxData[idx]!=null)lines.push('최고: '+formatPct(maxData[idx]));
+              if(minData[idx]!=null)lines.push('최저: '+formatPct(minData[idx]));
+              return lines;
+            }
           }
         },
         annotation:{
           annotations:{
-            zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'rgba(255,255,255,0.2)',borderWidth:1,borderDash:[4,4]}
+            zeroLine:{type:'line',yMin:0,yMax:0,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[4,4]}
           }
         }
       },
       scales:{
-        x:{grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},ticks:{color:'#ccc',font:{size:12,weight:'600'}}},
+        x:{grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},ticks:{color:'#ccc',font:{size:13,weight:'600'}}},
         y:{grid:{color:'rgba(255,255,255,0.04)',drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return formatPct(v);}}}
       }
-    }
+    },
+    plugins:[whiskerPlugin]
   });
+  chart._whiskerData={min:minData,max:maxData,color:whiskerColor};
+  return chart;
+}
+
+function buildJourneyCharts(buyStats,sellStats){
+  // Update threshold labels
+  var buyTh=document.getElementById('buyThresh').value;
+  var sellTh=document.getElementById('sellThresh').value;
+  document.querySelectorAll('.jc-buy-th').forEach(function(el){el.textContent=buyTh;});
+  document.querySelectorAll('.jc-sell-th').forEach(function(el){el.textContent=sellTh;});
+
+  // Buy journey chart
+  document.getElementById('buyJourneyCount').textContent=buyStats.count;
+  if(buyStats.count>0){
+    buyJourneyChart=buildSingleJourneyChart('buyJourneyChart',buyJourneyChart,buyStats,'rgba(34,197,94,0.6)','#22c55e','rgba(34,197,94,0.5)','공포 매수 평균 수익률');
+  }
+
+  // Sell journey chart — orange color scheme
+  document.getElementById('sellJourneyCount').textContent=sellStats.count;
+  if(sellStats.count>0){
+    sellJourneyChart=buildSingleJourneyChart('sellJourneyChart',sellJourneyChart,sellStats,'rgba(251,146,60,0.6)','#fb923c','rgba(251,146,60,0.5)','탐욕 매도 후 가격 변화');
+  }
 }
 
 function buildSignalTables(){
@@ -784,7 +838,7 @@ function buildSignalTables(){
   document.getElementById('buyWinRate').textContent='1년 보유 승률: '+buyWinPct+'% ('+buyWins+'/'+buyTotal+')';
 
   // Buy average row
-  var buyAvg=calcAvg(buySigs);
+  var buyAvg=calcAvgMinMax(buySigs);
   document.getElementById('buyTableFoot').innerHTML=buildAvgFootHtml(buyAvg,'📊 평균');
 
   // SELL table
@@ -810,11 +864,11 @@ function buildSignalTables(){
   document.getElementById('sellWinRate').textContent='1년 후 하락 비율: '+sellWinPct+'% ('+sellWins+'/'+sellTotal+')';
 
   // Sell average row
-  var sellAvg=calcAvg(sellSigs);
+  var sellAvg=calcAvgMinMax(sellSigs);
   document.getElementById('sellTableFoot').innerHTML=buildAvgFootHtml(sellAvg,'📊 평균');
 
-  // Journey chart
-  buildJourneyChart(buyAvg,sellAvg);
+  // Journey charts (split)
+  buildJourneyCharts(buyAvg,sellAvg);
 
   // Summary bar
   document.getElementById('sumBuySignals').textContent=buySigs.length+'건';
