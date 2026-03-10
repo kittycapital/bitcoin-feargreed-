@@ -9,6 +9,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js" crossorigin="anonymous" async></script>
 <style>
 :root{--hv-primary:#3b82f6;--hv-primary-light:#60a5fa;--hv-primary-dark:#2563eb;--hv-primary-glow:rgba(59,130,246,0.12);--hv-up:#22c55e;--hv-down:#ef4444;--hv-warning:#f59e0b;--hv-bg-base:#000;--hv-bg-surface:#0a0a0a;--hv-bg-card:#111;--hv-bg-card-hover:#181818;--hv-bg-elevated:#1a1a1a;--hv-text-primary:#e5e5e5;--hv-text-secondary:#8a8a8a;--hv-text-tertiary:#555;--hv-text-muted:#3a3a3a;--hv-border:rgba(255,255,255,0.06);--hv-border-strong:rgba(255,255,255,0.12);--hv-font-display:'Plus Jakarta Sans',sans-serif;--hv-font-body:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;--hv-font-mono:'JetBrains Mono','SF Mono',monospace;--hv-space-xs:8px;--hv-space-sm:12px;--hv-space-md:16px;--hv-space-lg:24px;--hv-space-xl:32px;--hv-radius-sm:6px;--hv-radius-md:10px;--hv-radius-lg:14px;--hv-shadow-sm:0 1px 3px rgba(0,0,0,.5);--hv-shadow-lg:0 8px 32px rgba(0,0,0,.7);--hv-transition-fast:150ms ease;--hv-transition:250ms ease;--hv-max-width:1280px;--hv-header-height:60px;--blue:#4a9eff;--cyan:#00e5cc;--red:#ff4a6a;--orange:#ff8c42;--yellow:#ffd642;--green:#42ff8c;--purple:#a855f7}
@@ -73,6 +75,10 @@ body::-webkit-scrollbar{display:none}
 /* CHART */
 .chart-wrap{position:relative;width:100%;height:300px}
 .chart-wrap canvas{width:100%!important;height:100%!important}
+.zoom-reset{position:absolute;top:6px;right:6px;padding:4px 10px;font-size:10px;font-family:var(--hv-font-mono);color:var(--hv-text-secondary);background:rgba(255,255,255,.06);border:1px solid var(--hv-border-strong);border-radius:4px;cursor:pointer;z-index:10;transition:all .15s;display:none}
+.zoom-reset:hover{color:var(--cyan);border-color:rgba(0,229,204,.3);background:rgba(0,229,204,.08)}
+.zoom-reset.visible{display:block}
+.zoom-hint{text-align:center;font-size:10px;color:var(--hv-text-muted);margin-top:6px;font-family:var(--hv-font-mono)}
 
 /* SHARE */
 .share-bar{display:flex;align-items:center;justify-content:space-between;padding:12px var(--hv-space-lg);border-top:1px solid var(--hv-border);background:var(--hv-bg-surface);border-radius:0 0 var(--hv-radius-lg) var(--hv-radius-lg)}
@@ -222,7 +228,8 @@ body::-webkit-scrollbar{display:none}
       <div class="card-label">BITCOIN PRICE</div>
       <div class="card-title">비트코인 가격</div>
       <div class="card-desc">Bitcoin Price (USD)</div>
-      <div class="chart-wrap" style="height:280px"><canvas id="btcChart"></canvas></div>
+      <div class="chart-wrap" style="height:280px"><button class="zoom-reset" id="btcZoomReset" onclick="resetZoom()">↺ 리셋</button><canvas id="btcChart"></canvas></div>
+      <div class="zoom-hint">마우스 휠로 줌 · 드래그로 이동 · 더블클릭 리셋</div>
       <div class="share-bar" style="margin-top:14px;border-top:1px solid var(--hv-border);border-radius:0">
         <div class="share-bar-preview"><span>비트코인 가격 차트</span> — herdvibe.com</div>
         <div class="share-bar-buttons" id="shareBtns1"></div>
@@ -234,7 +241,7 @@ body::-webkit-scrollbar{display:none}
       <div class="card-label">FEAR & GREED HISTORY</div>
       <div class="card-title">공포 탐욕 지수 추이</div>
       <div class="card-desc">극단적 공포(0~25) · 공포(25~45) · 중립(45~55) · 탐욕(55~75) · 극단적 탐욕(75~100)</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="fngChart"></canvas></div>
+      <div class="chart-wrap" style="height:220px"><button class="zoom-reset" id="fngZoomReset" onclick="resetZoom()">↺ 리셋</button><canvas id="fngChart"></canvas></div>
       <div class="share-bar" style="margin-top:14px;border-top:1px solid var(--hv-border);border-radius:0">
         <div class="share-bar-preview"><span>공포 탐욕 지수 추이</span> — herdvibe.com</div>
         <div class="share-bar-buttons" id="shareBtns2"></div>
@@ -285,6 +292,35 @@ var gridColor='rgba(255,255,255,0.04)';
 /* DATA */
 var fullData=null,chartData=null,btcHistory=null;
 var btcChart=null,fngChart=null,currentPeriod=365;
+var isSyncing=false;
+function syncCharts(sourceChart){
+  if(isSyncing)return;isSyncing=true;
+  var src=sourceChart.scales.x;
+  var target=sourceChart===btcChart?fngChart:btcChart;
+  if(target&&target.scales&&target.scales.x){
+    target.scales.x.options.min=src.min;
+    target.scales.x.options.max=src.max;
+    target.update('none');
+  }
+  updateZoomButtons();
+  isSyncing=false;
+}
+function updateZoomButtons(){
+  var show=false;
+  if(btcChart&&btcChart.isZoomedOrPanned&&btcChart.isZoomedOrPanned())show=true;
+  if(fngChart&&fngChart.isZoomedOrPanned&&fngChart.isZoomedOrPanned())show=true;
+  document.getElementById('btcZoomReset').className='zoom-reset'+(show?' visible':'');
+  document.getElementById('fngZoomReset').className='zoom-reset'+(show?' visible':'');
+}
+function resetZoom(){
+  if(btcChart&&btcChart.resetZoom)btcChart.resetZoom();
+  if(fngChart&&fngChart.resetZoom)fngChart.resetZoom();
+  updateZoomButtons();
+}
+var zoomOpts={zoom:{wheel:{enabled:true,speed:0.05},pinch:{enabled:true},mode:'x',onZoomComplete:function(ctx){syncCharts(ctx.chart);}},pan:{enabled:true,mode:'x',onPanComplete:function(ctx){syncCharts(ctx.chart);}},limits:{x:{minRange:7*24*60*60*1000}}};
+/* double-click to reset zoom */
+document.getElementById('btcChart').addEventListener('dblclick',resetZoom);
+document.getElementById('fngChart').addEventListener('dblclick',resetZoom);
 function formatPrice(p){return'$'+p.toLocaleString('en-US',{maximumFractionDigits:0});}
 function getDateFromString(s){var p=s.split('-');return new Date(p[0],p[1]-1,p[2]);}
 function getFngStatus(v){
@@ -357,7 +393,7 @@ function createBtcChart(){
   if(!ctx)return;
   if(btcChart){btcChart.destroy();btcChart=null;}
   var timeUnit=currentPeriod<=365?'month':currentPeriod<=1825?'quarter':'year';
-  btcChart=new Chart(ctx,{type:'line',data:{labels:chartData.dates,datasets:[{label:'Bitcoin Price',data:chartData.btc_prices,borderColor:'#71717a',backgroundColor:'rgba(113,113,122,0.05)',fill:true,borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#71717a'}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){return'BTC: '+formatPrice(c.raw);}}}},scales:{x:{type:'time',time:{unit:timeUnit,displayFormats:{month:'MMM yyyy',quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v;}}}}}});
+  btcChart=new Chart(ctx,{type:'line',data:{labels:chartData.dates,datasets:[{label:'Bitcoin Price',data:chartData.btc_prices,borderColor:'#71717a',backgroundColor:'rgba(113,113,122,0.05)',fill:true,borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#71717a'}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){return'BTC: '+formatPrice(c.raw);}}}},zoom:zoomOpts},scales:{x:{type:'time',time:{unit:timeUnit,displayFormats:{month:'MMM yyyy',quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},callback:function(v){return v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v;}}}}}});
 }
 
 function createFngChart(){
@@ -365,7 +401,7 @@ function createFngChart(){
   if(!ctx)return;
   if(fngChart){fngChart.destroy();fngChart=null;}
   var timeUnit=currentPeriod<=365?'month':currentPeriod<=1825?'quarter':'year';
-  fngChart=new Chart(ctx,{type:'line',data:{labels:chartData.dates,datasets:[{label:'Fear & Greed',data:chartData.fng_index,borderColor:'#fff',backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointBackgroundColor:'#fff',pointHoverBackgroundColor:'#fff',spanGaps:true,segment:{borderColor:function(ctx){var v=ctx.p1.parsed.y;if(v<=25)return'#ef4444';if(v<=45)return'#f97316';if(v<=55)return'#f59e0b';if(v<=75)return'#84cc16';return'#22c55e';}}}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){if(c.raw===null)return'No data';var s=getFngStatus(c.raw);return'Fear & Greed: '+Math.round(c.raw)+' ('+s.text+')';}}},annotation:{annotations:{redZone:{type:'box',yMin:0,yMax:25,backgroundColor:'rgba(239,68,68,0.08)',borderWidth:0},greenZone:{type:'box',yMin:75,yMax:100,backgroundColor:'rgba(34,197,94,0.08)',borderWidth:0},redLine:{type:'line',yMin:25,yMax:25,borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 공포',position:'start',backgroundColor:'transparent',color:'rgba(239,68,68,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},greenLine:{type:'line',yMin:75,yMax:75,borderColor:'rgba(34,197,94,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 탐욕',position:'start',backgroundColor:'transparent',color:'rgba(34,197,94,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},midLine:{type:'line',yMin:50,yMax:50,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[3,3]}}}},scales:{x:{type:'time',time:{unit:timeUnit,displayFormats:{month:'MMM yyyy',quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{min:0,max:100,grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10}}}}}});
+  fngChart=new Chart(ctx,{type:'line',data:{labels:chartData.dates,datasets:[{label:'Fear & Greed',data:chartData.fng_index,borderColor:'#fff',backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:4,pointBackgroundColor:'#fff',pointHoverBackgroundColor:'#fff',spanGaps:true,segment:{borderColor:function(ctx){var v=ctx.p1.parsed.y;if(v<=25)return'#ef4444';if(v<=45)return'#f97316';if(v<=55)return'#f59e0b';if(v<=75)return'#84cc16';return'#22c55e';}}}]},options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,10,10,0.95)',titleColor:'#e5e5e5',bodyColor:'#8a8a8a',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,cornerRadius:6,displayColors:false,callbacks:{title:function(c){return getDateFromString(chartData.dates[c[0].dataIndex]).toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'});},label:function(c){if(c.raw===null)return'No data';var s=getFngStatus(c.raw);return'Fear & Greed: '+Math.round(c.raw)+' ('+s.text+')';}}},annotation:{annotations:{redZone:{type:'box',yMin:0,yMax:25,backgroundColor:'rgba(239,68,68,0.08)',borderWidth:0},greenZone:{type:'box',yMin:75,yMax:100,backgroundColor:'rgba(34,197,94,0.08)',borderWidth:0},redLine:{type:'line',yMin:25,yMax:25,borderColor:'rgba(239,68,68,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 공포',position:'start',backgroundColor:'transparent',color:'rgba(239,68,68,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},greenLine:{type:'line',yMin:75,yMax:75,borderColor:'rgba(34,197,94,0.4)',borderWidth:1,borderDash:[5,5],label:{display:true,content:'극단적 탐욕',position:'start',backgroundColor:'transparent',color:'rgba(34,197,94,0.7)',font:{family:"'Noto Sans KR',sans-serif",size:10,weight:'500'}}},midLine:{type:'line',yMin:50,yMax:50,borderColor:'rgba(255,255,255,0.15)',borderWidth:1,borderDash:[3,3]}}},zoom:zoomOpts},scales:{x:{type:'time',time:{unit:timeUnit,displayFormats:{month:'MMM yyyy',quarter:'MMM yyyy',year:'yyyy'}},grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10},maxTicksLimit:8}},y:{min:0,max:100,grid:{color:gridColor,drawBorder:false},ticks:{color:'#888',font:{size:10}}}}}});
 }
 
 /* PERIOD FILTERING */
@@ -411,7 +447,7 @@ function setChartPeriod(days){
   // Preserve other fields for stats
   chartData.fng_index_full=fullData.fng_index;
   chartData.last_updated=fullData.last_updated;
-  createBtcChart();createFngChart();sendHeight();
+  createBtcChart();createFngChart();updateZoomButtons();sendHeight();
 }
 
 /* TABS */
